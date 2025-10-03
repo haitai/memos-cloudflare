@@ -78,7 +78,7 @@ export const userServiceClient = {
 	  // 修复：补充 password 字段
   if (request.user.password) {
     userData.password = request.user.password;
-  }
+  };
 
     return apiClient.updateUser(id, userData);
   },
