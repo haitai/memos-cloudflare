@@ -73,7 +73,13 @@ export const userServiceClient = {
       email: request.user.email,
       avatarUrl: request.user.avatarUrl,
       description: request.user.description,
+	  
     };
+	  // 修复：补充 password 字段
+  if (request.user.password) {
+    userData.password = request.user.password;
+  }
+
     return apiClient.updateUser(id, userData);
   },
   deleteUser: (request: { name: string }) => {

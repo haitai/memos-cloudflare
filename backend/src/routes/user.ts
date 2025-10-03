@@ -131,7 +131,7 @@ userRoutes.patch('/:id', async (c) => {
       return c.json({ message: 'Forbidden' }, 403);
     }
 
-    const { username, nickname, email, avatarUrl, description } = await c.req.json();
+    const { username, nickname, email, avatarUrl, description, password } = await c.req.json();
     const now = Math.floor(Date.now() / 1000);
 
     // 构建更新字段
@@ -163,6 +163,13 @@ userRoutes.patch('/:id', async (c) => {
       values.push(description);
     }
 
+	// 新增：处理密码更新
+	if (password !== undefined && password !== "") {
+	  const passwordHash = await hashPassword(password);
+	  updates.push('password_hash = ?');
+	  values.push(passwordhash);
+	}
+	
     updates.push('updated_ts = ?');
     values.push(now);
     values.push(userId);
