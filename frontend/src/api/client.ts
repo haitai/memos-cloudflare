@@ -162,6 +162,7 @@ class ApiClient {
       avatarUrl: user.avatarUrl || '',
       description: user.description || '',
       role: user.role || 'USER',
+	  password: '',
       state: user.rowStatus === 'NORMAL' ? 'ACTIVE' : 'ARCHIVED',
       createTime: user.createdTs ? new Date(user.createdTs * 1000) : new Date(),
       updateTime: user.updatedTs ? new Date(user.updatedTs * 1000) : new Date(),
