@@ -45,6 +45,13 @@ export const authServiceClient = {
   },
   signUp: (request: { username: string; password: string; email?: string }) =>
     apiClient.signUp(request.username, request.password, request.email),
+  signOut: () => {
+    // 清除本地 token
+    localStorage.removeItem("accessToken");
+    sessionStorage.removeItem("accessToken"); // 如果你也用 sessionStorage
+    // 可以根据你的项目实际情况清理其它相关信息
+    return Promise.resolve();
+  },
   getAuthStatus: () => apiClient.getCurrentUser(),
 };
 
