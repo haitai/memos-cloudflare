@@ -212,10 +212,6 @@ export const shortcutServiceClient = {
   deleteShortcut: (request: { parent: string; id: string }) => Promise.resolve({}),
 };
 
-export const tagServiceClient = {
-  listTags: () => fetch("/api/tag", { credentials: "include" }).then(res => res.json()),
-};
-
 // Inbox Service  
 export const inboxServiceClient = {
   listInboxes: (request: any) => Promise.resolve({ inboxes: [] }),

@@ -6,7 +6,6 @@ import { Shortcut } from "@/types/proto/api/v1/shortcut_service";
 import { User, UserSetting, UserStats } from "@/types/proto/api/v1/user_service";
 import { findNearestMatchedLanguage } from "@/utils/i18n";
 import workspaceStore from "./workspace";
-import { tagServiceClient } from "@/grpcweb";
 
 class LocalState {
   currentUser?: string;
@@ -156,16 +155,7 @@ const userStore = (() => {
       shortcuts,
     });
   };
-	const fetchTags = async () => {
-	  const tags = await tagServiceClient.listTags({});
-	  // 假设后端返回 [{name: 'tag1', memo_count: 3}, ...]
-	  const tagCount: Record<string, number> = {};
-	  for (const tag of tags) {
-		tagCount[tag.name] = tag.memo_count;
-	  }
-	  state.setPartial({ tagCount });
-	  console.log(state.tagCount);
-	};
+
   const fetchInboxes = async () => {
     const { inboxes } = await inboxServiceClient.listInboxes({});
     state.setPartial({
