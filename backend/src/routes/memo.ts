@@ -132,28 +132,34 @@ memoRoutes.get('/', async (c) => {
     }
 	// 处理内容搜索
 	if (oldFilter) {
+	  console.log('🔍 Backend - Processing oldFilter:', oldFilter);
 	  // 匹配 content_search == ["xxx"]
 	  const contentSearchMatch = oldFilter.match(/content_search == \[([^\]]+)\]/);
 	  if (contentSearchMatch) {
 		// 提取内容关键词数组
 		const words = JSON.parse(`[${contentSearchMatch[1]}]`);
+		console.log('🔍 Backend - Content search words:', words);
 		words.forEach((word: string) => {
 		  whereClause += ' AND m.content LIKE ?';
 		  params.push(`%${word}%`);
 		});
 	  }
-	  // 你可以在这里继续处理 tag_search、其他条件
+	  // 处理标签搜索
 	  const tag_search = oldFilter.match(/tag_search == \[([^\]]+)\]/);
 	  if (tag_search) {
-		// 提取内容关键词数组
+		// 提取标签名称数组
 		const tags = JSON.parse(`[${tag_search[1]}]`);
+		console.log('🏷️ Backend - Processing tag search:', tags);
 		tags.forEach((tag: string) => {
+			// 移除引号，因为JSON.parse会保留引号
+			const cleanTag = tag.replace(/"/g, '');
+			console.log('🏷️ Backend - Searching for tag:', cleanTag);
 			whereClause += ` AND EXISTS (
 			SELECT 1 FROM memo_tag mt 
 			JOIN tag t ON mt.tag_id = t.id 
 			WHERE mt.memo_id = m.id AND t.name = ?
 		)`;
-		  params.push(`%${tag}%`);
+		  params.push(cleanTag);
 		});
 	  }
 	}
@@ -179,6 +185,9 @@ memoRoutes.get('/', async (c) => {
 
     params.push(limit.toString(), offset.toString());
 
+    console.log('🔍 Backend - Final query params:', params);
+    console.log('🔍 Backend - Final whereClause:', whereClause);
+
     const memos = await c.env.DB.prepare(`
       SELECT m.*, u.username as creator_username
       FROM memo m
@@ -187,6 +196,8 @@ memoRoutes.get('/', async (c) => {
       ORDER BY m.created_ts DESC
       LIMIT ? OFFSET ?
     `).bind(...params).all();
+
+    console.log('🔍 Backend - Query results:', memos.results?.length || 0, 'memos found');
 
     // 为每个笔记获取详细信息
     const memosWithDetails = [];
