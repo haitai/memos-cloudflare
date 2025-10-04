@@ -13,13 +13,13 @@ import StatisticsView from "../StatisticsView";
 import ShortcutsSection from "./ShortcutsSection";
 import TagsSection from "./TagsSection";
 
-useEffect(() => {
-  userStore.fetchTags(); // 或 fetchTagCount
-}, []);
-
 interface Props {
   className?: string;
 }
+
+useEffect(() => {
+  userStore.fetchTags(); // 或 fetchTagCount
+}, []);
 
 const HomeSidebar = observer((props: Props) => {
   const location = useLocation();
