@@ -368,4 +368,224 @@ userRoutes.patch('/:id/setting', async (c) => {
   }
 });
 
+// 获取用户统计信息
+userRoutes.get('/:id/stats', async (c) => {
+  try {
+    const userId = parseInt(c.req.param('id'));
+    const userPayload = c.get('user');
+    
+    if (!userPayload) {
+      return c.json({ message: 'Unauthorized' }, 401);
+    }
+
+    // 检查权限：只能获取自己的统计，或者HOST可以获取任何人
+    const targetUser = await c.env.DB.prepare(
+      'SELECT * FROM user WHERE id = ? AND row_status = ?'
+    ).bind(userId, 'NORMAL').first();
+
+    if (!targetUser) {
+      return c.json({ message: 'User not found' }, 404);
+    }
+
+    if (targetUser.uid !== userPayload.sub && userPayload.role !== 'HOST') {
+      return c.json({ message: 'Forbidden' }, 403);
+    }
+
+    // 获取用户的笔记总数
+    const memoCountResult = await c.env.DB.prepare(
+      'SELECT COUNT(*) as count FROM memo WHERE creator_id = ? AND row_status = ?'
+    ).bind(userId, 'NORMAL').first();
+
+    const totalMemoCount = memoCountResult?.count || 0;
+
+    // 获取标签统计
+    const tagStats = await c.env.DB.prepare(`
+      SELECT t.name, COUNT(mt.memo_id) as count
+      FROM tag t
+      LEFT JOIN memo_tag mt ON t.id = mt.tag_id
+      LEFT JOIN memo m ON mt.memo_id = m.id
+      WHERE t.creator_id = ? AND m.row_status = ?
+      GROUP BY t.id, t.name
+      ORDER BY count DESC, t.name ASC
+    `).bind(userId, 'NORMAL').all();
+
+    const tagCount: Record<string, number> = {};
+    for (const row of tagStats.results || []) {
+      tagCount[row.name] = row.count;
+    }
+
+    // 获取每日笔记统计（最近30天）
+    const thirtyDaysAgo = Math.floor(Date.now() / 1000) - (30 * 24 * 60 * 60);
+    const dailyStats = await c.env.DB.prepare(`
+      SELECT 
+        DATE(created_ts, 'unixepoch') as date,
+        COUNT(*) as count
+      FROM memo 
+      WHERE creator_id = ? 
+        AND row_status = ? 
+        AND created_ts > ?
+      GROUP BY DATE(created_ts, 'unixepoch')
+      ORDER BY date DESC
+    `).bind(userId, 'NORMAL', thirtyDaysAgo).all();
+
+    const memoDisplayTimestamps = (dailyStats.results || []).map((row: any) => 
+      new Date(row.date).toISOString()
+    );
+
+    // 计算各种时间段的笔记数量
+    const now = Math.floor(Date.now() / 1000);
+    const oneDayAgo = now - (24 * 60 * 60);
+    const oneWeekAgo = now - (7 * 24 * 60 * 60);
+    const oneMonthAgo = now - (30 * 24 * 60 * 60);
+
+    const dailyCountResult = await c.env.DB.prepare(
+      'SELECT COUNT(*) as count FROM memo WHERE creator_id = ? AND row_status = ? AND created_ts > ?'
+    ).bind(userId, 'NORMAL', oneDayAgo).first();
+
+    const weeklyCountResult = await c.env.DB.prepare(
+      'SELECT COUNT(*) as count FROM memo WHERE creator_id = ? AND row_status = ? AND created_ts > ?'
+    ).bind(userId, 'NORMAL', oneWeekAgo).first();
+
+    const monthlyCountResult = await c.env.DB.prepare(
+      'SELECT COUNT(*) as count FROM memo WHERE creator_id = ? AND row_status = ? AND created_ts > ?'
+    ).bind(userId, 'NORMAL', oneMonthAgo).first();
+
+    // 获取置顶笔记
+    const pinnedMemos = await c.env.DB.prepare(`
+      SELECT m.id
+      FROM memo m
+      WHERE m.creator_id = ? AND m.row_status = ? AND m.pinned = 1
+      ORDER BY m.created_ts DESC
+    `).bind(userId, 'NORMAL').all();
+
+    const pinnedMemoNames = (pinnedMemos.results || []).map((row: any) => `memos/${row.id}`);
+
+    return c.json({
+      name: `users/${userId}`,
+      memoDisplayTimestamps,
+      memoTypeStats: {
+        totalMemoCount,
+        dailyMemoCount: dailyCountResult?.count || 0,
+        weeklyMemoCount: weeklyCountResult?.count || 0,
+        monthlyMemoCount: monthlyCountResult?.count || 0,
+      },
+      tagCount,
+      pinnedMemos: pinnedMemoNames,
+      totalMemoCount,
+    });
+
+  } catch (error) {
+    console.error('Get user stats error:', error);
+    return c.json({ message: 'Internal server error' }, 500);
+  }
+});
+
+// 获取所有用户统计信息（管理员功能）
+userRoutes.get('/stats', async (c) => {
+  try {
+    const userPayload = c.get('user');
+    if (!userPayload || userPayload.role !== 'HOST') {
+      return c.json({ message: 'Forbidden' }, 403);
+    }
+
+    const users = await c.env.DB.prepare(
+      'SELECT id FROM user WHERE row_status = ?'
+    ).bind('NORMAL').all();
+
+    const userStats = [];
+    for (const user of users.results || []) {
+      const userId = user.id;
+      
+      // 获取用户的笔记总数
+      const memoCountResult = await c.env.DB.prepare(
+        'SELECT COUNT(*) as count FROM memo WHERE creator_id = ? AND row_status = ?'
+      ).bind(userId, 'NORMAL').first();
+
+      const totalMemoCount = memoCountResult?.count || 0;
+
+      // 获取标签统计
+      const tagStats = await c.env.DB.prepare(`
+        SELECT t.name, COUNT(mt.memo_id) as count
+        FROM tag t
+        LEFT JOIN memo_tag mt ON t.id = mt.tag_id
+        LEFT JOIN memo m ON mt.memo_id = m.id
+        WHERE t.creator_id = ? AND m.row_status = ?
+        GROUP BY t.id, t.name
+        ORDER BY count DESC, t.name ASC
+      `).bind(userId, 'NORMAL').all();
+
+      const tagCount: Record<string, number> = {};
+      for (const row of tagStats.results || []) {
+        tagCount[row.name] = row.count;
+      }
+
+      // 获取每日笔记统计（最近30天）
+      const thirtyDaysAgo = Math.floor(Date.now() / 1000) - (30 * 24 * 60 * 60);
+      const dailyStats = await c.env.DB.prepare(`
+        SELECT 
+          DATE(created_ts, 'unixepoch') as date,
+          COUNT(*) as count
+        FROM memo 
+        WHERE creator_id = ? 
+          AND row_status = ? 
+          AND created_ts > ?
+        GROUP BY DATE(created_ts, 'unixepoch')
+        ORDER BY date DESC
+      `).bind(userId, 'NORMAL', thirtyDaysAgo).all();
+
+      const memoDisplayTimestamps = (dailyStats.results || []).map((row: any) => 
+        new Date(row.date).toISOString()
+      );
+
+      // 计算各种时间段的笔记数量
+      const now = Math.floor(Date.now() / 1000);
+      const oneDayAgo = now - (24 * 60 * 60);
+      const oneWeekAgo = now - (7 * 24 * 60 * 60);
+      const oneMonthAgo = now - (30 * 24 * 60 * 60);
+
+      const dailyCountResult = await c.env.DB.prepare(
+        'SELECT COUNT(*) as count FROM memo WHERE creator_id = ? AND row_status = ? AND created_ts > ?'
+      ).bind(userId, 'NORMAL', oneDayAgo).first();
+
+      const weeklyCountResult = await c.env.DB.prepare(
+        'SELECT COUNT(*) as count FROM memo WHERE creator_id = ? AND row_status = ? AND created_ts > ?'
+      ).bind(userId, 'NORMAL', oneWeekAgo).first();
+
+      const monthlyCountResult = await c.env.DB.prepare(
+        'SELECT COUNT(*) as count FROM memo WHERE creator_id = ? AND row_status = ? AND created_ts > ?'
+      ).bind(userId, 'NORMAL', oneMonthAgo).first();
+
+      // 获取置顶笔记
+      const pinnedMemos = await c.env.DB.prepare(`
+        SELECT m.id
+        FROM memo m
+        WHERE m.creator_id = ? AND m.row_status = ? AND m.pinned = 1
+        ORDER BY m.created_ts DESC
+      `).bind(userId, 'NORMAL').all();
+
+      const pinnedMemoNames = (pinnedMemos.results || []).map((row: any) => `memos/${row.id}`);
+
+      userStats.push({
+        name: `users/${userId}`,
+        memoDisplayTimestamps,
+        memoTypeStats: {
+          totalMemoCount,
+          dailyMemoCount: dailyCountResult?.count || 0,
+          weeklyMemoCount: weeklyCountResult?.count || 0,
+          monthlyMemoCount: monthlyCountResult?.count || 0,
+        },
+        tagCount,
+        pinnedMemos: pinnedMemoNames,
+        totalMemoCount,
+      });
+    }
+
+    return c.json({ userStats });
+
+  } catch (error) {
+    console.error('Get all user stats error:', error);
+    return c.json({ message: 'Internal server error' }, 500);
+  }
+});
+
 export { userRoutes }; 

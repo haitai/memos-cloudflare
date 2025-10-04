@@ -466,6 +466,31 @@ class ApiClient {
       memoVisibility: setting.memoVisibility,
     };
   }
+
+  // User Stats Services
+  async getUserStats(userId: number) {
+    const stats = await this.request<any>(`/api/user/${userId}/stats`);
+    return {
+      name: stats.name,
+      memoDisplayTimestamps: stats.memoDisplayTimestamps || [],
+      memoTypeStats: stats.memoTypeStats || {
+        totalMemoCount: 0,
+        dailyMemoCount: 0,
+        weeklyMemoCount: 0,
+        monthlyMemoCount: 0,
+      },
+      tagCount: stats.tagCount || {},
+      pinnedMemos: stats.pinnedMemos || [],
+      totalMemoCount: stats.totalMemoCount || 0,
+    };
+  }
+
+  async getAllUserStats() {
+    const response = await this.request<{ userStats: any[] }>('/api/user/stats');
+    return {
+      userStats: response.userStats || []
+    };
+  }
 }
 
 export const apiClient = new ApiClient();

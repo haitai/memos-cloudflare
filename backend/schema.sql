@@ -40,6 +40,7 @@ CREATE TABLE memo (
     creator_id INTEGER NOT NULL,
     content TEXT NOT NULL,
     visibility TEXT NOT NULL DEFAULT 'PRIVATE',
+    pinned INTEGER NOT NULL DEFAULT 0,
     row_status TEXT NOT NULL DEFAULT 'NORMAL',
     created_ts INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
     updated_ts INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),

@@ -84,46 +84,23 @@ updateUser: (request: { user: any; updateMask: any }) => {
     const id = parseInt(request.name.replace('users/', ''));
     return apiClient.deleteUser(id);
   },
-  getUserSetting: (request?: { name?: string }) => {
-    // 从当前登录用户获取ID
-    const currentUserId = 1; // TODO: 从当前用户context获取真实ID
+  getUserSetting: async (request?: { name?: string }) => {
+    // 获取当前用户信息来提取ID
+    const currentUser = await apiClient.getCurrentUser();
+    const currentUserId = parseInt(currentUser.name.replace('users/', ''));
     return apiClient.getUserSetting(currentUserId);
   },
-  updateUserSetting: (request: { setting: any; updateMask: string[] }) => {
-    // 从当前登录用户获取ID
-    const currentUserId = 1; // TODO: 从当前用户context获取真实ID
+  updateUserSetting: async (request: { setting: any; updateMask: string[] }) => {
+    // 获取当前用户信息来提取ID
+    const currentUser = await apiClient.getCurrentUser();
+    const currentUserId = parseInt(currentUser.name.replace('users/', ''));
     return apiClient.updateUserSetting(currentUserId, request.setting);
   },
-  getUserStats: (request: { name: string }) => 
-    Promise.resolve({
-      name: request.name,
-      memoDisplayTimestamps: [],
-      memoTypeStats: {
-        totalMemoCount: 0,
-        dailyMemoCount: 0,
-        weeklyMemoCount: 0,
-        monthlyMemoCount: 0,
-      },
-      tagCount: {},
-      pinnedMemos: [],
-      totalMemoCount: 0,
-    }),
-  listAllUserStats: () => 
-    Promise.resolve({ 
-      userStats: [{
-        name: 'users/1',
-        memoDisplayTimestamps: [],
-        memoTypeStats: {
-          totalMemoCount: 0,
-          dailyMemoCount: 0,
-          weeklyMemoCount: 0,
-          monthlyMemoCount: 0,
-        },
-        tagCount: {},
-        pinnedMemos: [],
-        totalMemoCount: 0,
-      }]
-    }),
+  getUserStats: (request: { name: string }) => {
+    const userId = parseInt(request.name.replace('users/', ''));
+    return apiClient.getUserStats(userId);
+  },
+  listAllUserStats: () => apiClient.getAllUserStats(),
 };
 
 // Memo Service  
