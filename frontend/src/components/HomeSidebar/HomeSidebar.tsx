@@ -5,12 +5,17 @@ import useDebounce from "react-use/lib/useDebounce";
 import SearchBar from "@/components/SearchBar";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import { Routes } from "@/router";
+import { useEffect } from "react";
 import { memoStore, userStore } from "@/store/v2";
 import { cn } from "@/utils";
 import MemoFilters from "../MemoFilters";
 import StatisticsView from "../StatisticsView";
 import ShortcutsSection from "./ShortcutsSection";
 import TagsSection from "./TagsSection";
+
+useEffect(() => {
+  userStore.fetchTags(); // 或 fetchTagCount
+}, []);
 
 interface Props {
   className?: string;
