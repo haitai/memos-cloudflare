@@ -174,6 +174,21 @@ class ApiClient {
     });
   }
 
+  // Helper function to calculate memo properties
+  private calculateMemoProperties(content: string) {
+    const hasLink = /https?:\/\/[^\s]+/.test(content);
+    const hasTaskList = /- \[[ xX]\]/.test(content);
+    const hasCode = /```|`/.test(content);
+    const hasIncompleteTasks = /- \[ \]/.test(content);
+    
+    return {
+      hasLink,
+      hasTaskList,
+      hasCode,
+      hasIncompleteTasks
+    };
+  }
+
   // Helper function to convert plain text to nodes structure
   private convertContentToNodes(content: string) {
     if (!content || content.trim() === '') {
@@ -238,26 +253,30 @@ class ApiClient {
 
     
     // 转换为前端期望的protobuf格式
-    const formattedMemos = Array.isArray(memos) ? memos.map(memo => ({
-      name: `memos/${memo.id}`,
-      uid: memo.uid || `memo-uid-${memo.id}`,
-      creator: `users/${memo.creatorId}`,
-      content: memo.content || '',
-      nodes: this.convertContentToNodes(memo.content || ''),
-      visibility: memo.visibility || 'PRIVATE',
-      tags: memo.tags || [],
-      pinned: memo.pinned || false,
-      resources: memo.resources || [], // 使用后端返回的完整资源对象数组
-      relations: memo.relations || [],
-      reactions: memo.reactions || [],
-      snippet: memo.content ? memo.content.slice(0, 100) : '',
-      parent: memo.parent || '',
-      createTime: memo.createdTs ? new Date(memo.createdTs * 1000) : new Date(),
-      updateTime: memo.updatedTs ? new Date(memo.updatedTs * 1000) : new Date(),
-      displayTime: memo.createdTs ? new Date(memo.createdTs * 1000) : new Date(),
-      state: memo.rowStatus === 'ARCHIVED' ? 'ARCHIVED' : 'NORMAL',
-      location: memo.location || undefined,
-    })) : [];
+    const formattedMemos = Array.isArray(memos) ? memos.map(memo => {
+      const properties = this.calculateMemoProperties(memo.content || '');
+      return {
+        name: `memos/${memo.id}`,
+        uid: memo.uid || `memo-uid-${memo.id}`,
+        creator: `users/${memo.creatorId}`,
+        content: memo.content || '',
+        nodes: this.convertContentToNodes(memo.content || ''),
+        visibility: memo.visibility || 'PRIVATE',
+        tags: memo.tags || [],
+        pinned: memo.pinned || false,
+        resources: memo.resources || [], // 使用后端返回的完整资源对象数组
+        relations: memo.relations || [],
+        reactions: memo.reactions || [],
+        snippet: memo.content ? memo.content.slice(0, 100) : '',
+        parent: memo.parent || '',
+        createTime: memo.createdTs ? new Date(memo.createdTs * 1000) : new Date(),
+        updateTime: memo.updatedTs ? new Date(memo.updatedTs * 1000) : new Date(),
+        displayTime: memo.createdTs ? new Date(memo.createdTs * 1000) : new Date(),
+        state: memo.rowStatus === 'ARCHIVED' ? 'ARCHIVED' : 'NORMAL',
+        location: memo.location || undefined,
+        property: properties,
+      };
+    }) : [];
     
     const result = { 
       memos: formattedMemos, 
@@ -270,6 +289,7 @@ class ApiClient {
 
   async getMemo(id: number) {
     const memo = await this.request<any>(`/api/memo/${id}`);
+    const properties = this.calculateMemoProperties(memo.content || '');
     
     // 转换为前端期望的protobuf格式
     return {
@@ -291,6 +311,7 @@ class ApiClient {
       displayTime: memo.createdTs ? new Date(memo.createdTs * 1000) : new Date(),
       state: memo.rowStatus === 'ARCHIVED' ? 'ARCHIVED' : 'NORMAL',
       location: memo.location || undefined,
+      property: properties,
     };
   }
 
@@ -299,6 +320,7 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify(data),
     });
+    const properties = this.calculateMemoProperties(memo.content || '');
     
     // 转换为前端期望的protobuf格式
     return {
@@ -320,6 +342,7 @@ class ApiClient {
       displayTime: memo.createdTs ? new Date(memo.createdTs * 1000) : new Date(),
       state: memo.rowStatus === 'ARCHIVED' ? 'ARCHIVED' : 'NORMAL',
       location: memo.location || undefined,
+      property: properties,
     };
   }
 
@@ -328,6 +351,7 @@ class ApiClient {
       method: 'PATCH',
       body: JSON.stringify(data),
     });
+    const properties = this.calculateMemoProperties(memo.content || '');
     
     // 转换为前端期望的protobuf格式
     return {
@@ -349,6 +373,7 @@ class ApiClient {
       displayTime: memo.createdTs ? new Date(memo.createdTs * 1000) : new Date(),
       state: memo.rowStatus === 'ARCHIVED' ? 'ARCHIVED' : 'NORMAL',
       location: memo.location || undefined,
+      property: properties,
     };
   }
 

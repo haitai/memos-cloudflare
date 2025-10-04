@@ -162,6 +162,28 @@ memoRoutes.get('/', async (c) => {
 		  params.push(cleanTag);
 		});
 	  }
+	  // 处理属性筛选器
+	  const hasTaskListMatch = oldFilter.match(/has_task_list == true/);
+	  if (hasTaskListMatch) {
+		console.log('📋 Backend - Processing hasTaskList filter');
+		whereClause += ` AND EXISTS (
+		  SELECT 1 FROM memo_tag mt 
+		  JOIN tag t ON mt.tag_id = t.id 
+		  WHERE mt.memo_id = m.id AND t.name LIKE '%task%'
+		)`;
+	  }
+	  
+	  const hasLinkMatch = oldFilter.match(/has_link == true/);
+	  if (hasLinkMatch) {
+		console.log('🔗 Backend - Processing hasLink filter');
+		whereClause += ` AND m.content LIKE '%http%'`;
+	  }
+	  
+	  const hasCodeMatch = oldFilter.match(/has_code == true/);
+	  if (hasCodeMatch) {
+		console.log('💻 Backend - Processing hasCode filter');
+		whereClause += ` AND (m.content LIKE '%```%' OR m.content LIKE '%`%')`;
+	  }
 	}
     if (visibility) {
       whereClause += ' AND m.visibility = ?';
