@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { hashPassword } from '../routes/auth';
 
 type Env = {
   DB: D1Database;
@@ -167,7 +168,7 @@ userRoutes.patch('/:id', async (c) => {
 	if (password !== undefined && password !== "") {
 	  const passwordHash = await hashPassword(password);
 	  updates.push('password_hash = ?');
-	  values.push(passwordhash);
+	  values.push(passwordHash);
 	}
 	
     updates.push('updated_ts = ?');

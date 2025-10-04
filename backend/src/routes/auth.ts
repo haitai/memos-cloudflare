@@ -149,7 +149,7 @@ authRoutes.post('/signup', async (c) => {
 });
 
 // 密码哈希函数
-async function hashPassword(password: string): Promise<string> {
+export async function hashPassword(password: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(password);
   
