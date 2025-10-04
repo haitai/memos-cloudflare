@@ -228,12 +228,14 @@ class ApiClient {
 
   // Memo Services
   async getMemos(params: any = {}) {
+	// params.state 是 State.ARCHIVED 时，转换为 rowStatus: 'ARCHIVED'
+	if (params.state === 'ARCHIVED') {
+		params.rowStatus = 'ARCHIVED';
+	}
+
     const searchParams = new URLSearchParams(params);
     const memos = await this.request<any[]>(`/api/memo?${searchParams}`);
-	 // params.state 是 State.ARCHIVED 时，转换为 rowStatus: 'ARCHIVED'
-	if (params.state === 'ARCHIVED') {
-	params.rowStatus = 'ARCHIVED';
-	}
+
     
     // 转换为前端期望的protobuf格式
     const formattedMemos = Array.isArray(memos) ? memos.map(memo => ({
