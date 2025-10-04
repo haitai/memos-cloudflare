@@ -403,16 +403,18 @@ userRoutes.get('/:id/stats', async (c) => {
       SELECT t.name, COUNT(mt.memo_id) as count
       FROM tag t
       LEFT JOIN memo_tag mt ON t.id = mt.tag_id
-      LEFT JOIN memo m ON mt.memo_id = m.id
-      WHERE t.creator_id = ? AND m.row_status = ?
+      LEFT JOIN memo m ON mt.memo_id = m.id AND m.row_status = ?
+      WHERE t.creator_id = ?
       GROUP BY t.id, t.name
       ORDER BY count DESC, t.name ASC
-    `).bind(userId, 'NORMAL').all();
+    `).bind('NORMAL', userId).all();
 
     const tagCount: Record<string, number> = {};
+    console.log('🏷️ Backend - tagStats results:', tagStats.results);
     for (const row of tagStats.results || []) {
-      tagCount[row.name] = row.count;
+      tagCount[(row as any).name] = (row as any).count;
     }
+    console.log('🏷️ Backend - processed tagCount:', tagCount);
 
     // 获取每日笔记统计（最近30天）
     const thirtyDaysAgo = Math.floor(Date.now() / 1000) - (30 * 24 * 60 * 60);
@@ -508,15 +510,15 @@ userRoutes.get('/stats', async (c) => {
         SELECT t.name, COUNT(mt.memo_id) as count
         FROM tag t
         LEFT JOIN memo_tag mt ON t.id = mt.tag_id
-        LEFT JOIN memo m ON mt.memo_id = m.id
-        WHERE t.creator_id = ? AND m.row_status = ?
+        LEFT JOIN memo m ON mt.memo_id = m.id AND m.row_status = ?
+        WHERE t.creator_id = ?
         GROUP BY t.id, t.name
         ORDER BY count DESC, t.name ASC
-      `).bind(userId, 'NORMAL').all();
+      `).bind('NORMAL', userId).all();
 
       const tagCount: Record<string, number> = {};
       for (const row of tagStats.results || []) {
-        tagCount[row.name] = row.count;
+        tagCount[(row as any).name] = (row as any).count;
       }
 
       // 获取每日笔记统计（最近30天）

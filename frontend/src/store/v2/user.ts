@@ -180,21 +180,30 @@ const userStore = (() => {
   };
 
   const fetchUserStats = async (user?: string) => {
+    console.log('🔄 fetchUserStats called with user:', user);
     const userStatsByName: Record<string, UserStats> = {};
     if (!user) {
+      console.log('📊 Fetching all user stats...');
       const { userStats } = await userServiceClient.listAllUserStats({});
+      console.log('📊 All user stats received:', userStats);
       for (const stats of userStats) {
         userStatsByName[stats.name] = stats;
       }
     } else {
+      console.log('📊 Fetching stats for user:', user);
       const userStats = await userServiceClient.getUserStats({ name: user });
+      console.log('📊 User stats received:', userStats);
       userStatsByName[user] = userStats;
     }
+    console.log('📊 Setting userStatsByName:', userStatsByName);
     state.setPartial({
       userStatsByName: {
+        ...state.userStatsByName,
         ...userStatsByName,
       },
     });
+    console.log('📊 Final userStatsByName state:', state.userStatsByName);
+    console.log('📊 Final tagCount:', state.tagCount);
   };
 
   const setStatsStateId = (id = uniqueId()) => {

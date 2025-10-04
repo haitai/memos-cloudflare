@@ -22,7 +22,9 @@ const TagsSection = observer((props: Props) => {
   const tags = Object.entries(userStore.state.tagCount)
     .sort((a, b) => a[0].localeCompare(b[0]))
     .sort((a, b) => b[1] - a[1]);
-	console.log("Tags:", tags);
+	console.log("🏷️ TagsSection - userStore.state.tagCount:", userStore.state.tagCount);
+	console.log("🏷️ TagsSection - userStore.state.userStatsByName:", userStore.state.userStatsByName);
+	console.log("🏷️ TagsSection - processed tags:", tags);
 
   const handleTagClick = (tag: string) => {
     const isActive = memoFilterStore.getFiltersByFactor("tagSearch").some((filter: MemoFilter) => filter.value === tag);

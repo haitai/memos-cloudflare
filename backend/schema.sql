@@ -99,4 +99,14 @@ INSERT INTO user (uid, username, password_hash, nickname, role, row_status)
 VALUES ('admin-uid-12345', 'admin', '$2b$10$9XZw8vPzF6EQRKQJZr8U4OyIo8hC2VL.KKFJJBb8iP4oJm5mZw7Ke', 'Administrator', 'HOST', 'NORMAL');
 
 INSERT INTO memo (uid, creator_id, content, visibility, row_status) 
-VALUES ('memo-uid-12345', 1, '欢迎使用 Memos Cloudflare 版本！\n\n这是一个基于 Cloudflare Workers + D1 + R2 的 Memos 部署。\n\n功能特点：\n- 🚀 无服务器架构\n- 💾 D1 数据库存储\n- 📦 R2 对象存储\n- 🔒 JWT 身份验证\n- 🌐 全球边缘部署', 'PUBLIC', 'NORMAL'); 
+VALUES ('memo-uid-12345', 1, '欢迎使用 Memos Cloudflare 版本！\n\n这是一个基于 Cloudflare Workers + D1 + R2 的 Memos 部署。\n\n功能特点：\n- 🚀 无服务器架构\n- 💾 D1 数据库存储\n- 📦 R2 对象存储\n- 🔒 JWT 身份验证\n- 🌐 全球边缘部署', 'PUBLIC', 'NORMAL');
+
+-- 插入测试标签
+INSERT INTO tag (creator_id, name, created_ts) VALUES (1, '测试', strftime('%s', 'now'));
+INSERT INTO tag (creator_id, name, created_ts) VALUES (1, '开发', strftime('%s', 'now'));
+INSERT INTO tag (creator_id, name, created_ts) VALUES (1, 'Cloudflare', strftime('%s', 'now'));
+
+-- 插入memo-tag关联
+INSERT INTO memo_tag (memo_id, tag_id) VALUES (1, 1);
+INSERT INTO memo_tag (memo_id, tag_id) VALUES (1, 2);
+INSERT INTO memo_tag (memo_id, tag_id) VALUES (1, 3); 
