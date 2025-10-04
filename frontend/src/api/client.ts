@@ -316,9 +316,24 @@ class ApiClient {
   }
 
   async createMemo(data: any) {
+    // 清理数据，只保留后端需要的字段
+    const cleanData = {
+      content: data.content || '',
+      visibility: data.visibility || 'PRIVATE',
+      tags: data.tags || [],
+      pinned: data.pinned || false,
+      resources: data.resources || [],
+      relations: data.relations || [],
+      reactions: data.reactions || [],
+      parent: data.parent || '',
+      location: data.location || undefined,
+    };
+    
+    console.log('📝 Creating memo with clean data:', cleanData);
+    
     const memo = await this.request<any>('/api/memo', {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify(cleanData),
     });
     const properties = this.calculateMemoProperties(memo.content || '');
     
@@ -347,9 +362,23 @@ class ApiClient {
   }
 
   async updateMemo(id: number, data: any) {
+    // 清理数据，只保留后端需要的字段
+    const cleanData: any = {};
+    if (data.content !== undefined) cleanData.content = data.content;
+    if (data.visibility !== undefined) cleanData.visibility = data.visibility;
+    if (data.tags !== undefined) cleanData.tags = data.tags;
+    if (data.pinned !== undefined) cleanData.pinned = data.pinned;
+    if (data.resources !== undefined) cleanData.resources = data.resources;
+    if (data.relations !== undefined) cleanData.relations = data.relations;
+    if (data.reactions !== undefined) cleanData.reactions = data.reactions;
+    if (data.parent !== undefined) cleanData.parent = data.parent;
+    if (data.location !== undefined) cleanData.location = data.location;
+    
+    console.log('📝 Updating memo with clean data:', cleanData);
+    
     const memo = await this.request<any>(`/api/memo/${id}`, {
       method: 'PATCH',
-      body: JSON.stringify(data),
+      body: JSON.stringify(cleanData),
     });
     const properties = this.calculateMemoProperties(memo.content || '');
     
@@ -499,10 +528,10 @@ class ApiClient {
       name: stats.name,
       memoDisplayTimestamps: stats.memoDisplayTimestamps || [],
       memoTypeStats: stats.memoTypeStats || {
-        totalMemoCount: 0,
-        dailyMemoCount: 0,
-        weeklyMemoCount: 0,
-        monthlyMemoCount: 0,
+        linkCount: 0,
+        codeCount: 0,
+        todoCount: 0,
+        undoCount: 0,
       },
       tagCount: stats.tagCount || {},
       pinnedMemos: stats.pinnedMemos || [],

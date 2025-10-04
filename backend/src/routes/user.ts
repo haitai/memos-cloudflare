@@ -36,7 +36,7 @@ userRoutes.get('/me', async (c) => {
       return c.json({ message: 'User not found' }, 404);
     }
 
-    // 返回用户信息（不包括密码哈希）
+    // 返回用户信息（不包括密码哈希�?
     const userResponse = {
       id: user.id,
       uid: user.uid,
@@ -59,7 +59,7 @@ userRoutes.get('/me', async (c) => {
   }
 });
 
-// 获取用户列表（管理员功能）
+// 获取用户列表（管理员功能�?
 userRoutes.get('/', async (c) => {
   try {
     const userPayload = c.get('user');
@@ -119,7 +119,7 @@ userRoutes.patch('/:id', async (c) => {
       return c.json({ message: 'Unauthorized' }, 401);
     }
 
-    // 检查权限：只能修改自己的信息，或者HOST可以修改任何人
+    // 检查权限：只能修改自己的信息，或者HOST可以修改任何�?
     const targetUser = await c.env.DB.prepare(
       'SELECT * FROM user WHERE id = ? AND row_status = ?'
     ).bind(userId, 'NORMAL').first();
@@ -164,7 +164,7 @@ userRoutes.patch('/:id', async (c) => {
       values.push(description);
     }
 
-	// 新增：处理密码更新
+	// 新增：处理密码更�?
 	if (password !== undefined && password !== "") {
 	  const passwordHash = await hashPassword(password);
 	  updates.push('password_hash = ?');
@@ -204,7 +204,7 @@ userRoutes.get('/:id/setting', async (c) => {
       return c.json({ message: 'Unauthorized' }, 401);
     }
 
-    // 检查权限：只能获取自己的设置，或者HOST可以获取任何人
+    // 检查权限：只能获取自己的设置，或者HOST可以获取任何�?
     const targetUser = await c.env.DB.prepare(
       'SELECT * FROM user WHERE id = ? AND row_status = ?'
     ).bind(userId, 'NORMAL').first();
@@ -217,7 +217,7 @@ userRoutes.get('/:id/setting', async (c) => {
       return c.json({ message: 'Forbidden' }, 403);
     }
 
-    // 确保user_setting表存在
+    // 确保user_setting表存�?
     try {
       await c.env.DB.prepare(`
         CREATE TABLE IF NOT EXISTS user_setting (
@@ -235,13 +235,13 @@ userRoutes.get('/:id/setting', async (c) => {
       console.log('Table creation skipped (may already exist):', createTableError);
     }
 
-    // 获取用户设置，如果不存在则返回默认值
+    // 获取用户设置，如果不存在则返回默认�?
     let userSetting = await c.env.DB.prepare(
       'SELECT * FROM user_setting WHERE user_id = ?'
     ).bind(userId).first();
 
     if (!userSetting) {
-      // 如果没有设置记录，创建默认设置
+      // 如果没有设置记录，创建默认设�?
       const now = Math.floor(Date.now() / 1000);
       await c.env.DB.prepare(`
         INSERT INTO user_setting (user_id, locale, appearance, memo_visibility, created_ts, updated_ts)
@@ -281,7 +281,7 @@ userRoutes.patch('/:id/setting', async (c) => {
       return c.json({ message: 'Unauthorized' }, 401);
     }
 
-    // 检查权限：只能修改自己的设置，或者HOST可以修改任何人
+    // 检查权限：只能修改自己的设置，或者HOST可以修改任何�?
     const targetUser = await c.env.DB.prepare(
       'SELECT * FROM user WHERE id = ? AND row_status = ?'
     ).bind(userId, 'NORMAL').first();
@@ -297,7 +297,7 @@ userRoutes.patch('/:id/setting', async (c) => {
     const { locale, appearance, memoVisibility } = await c.req.json();
     const now = Math.floor(Date.now() / 1000);
 
-    // 检查是否已有设置记录
+    // 检查是否已有设置记�?
     const existingSetting = await c.env.DB.prepare(
       'SELECT * FROM user_setting WHERE user_id = ?'
     ).bind(userId).first();
@@ -332,7 +332,7 @@ userRoutes.patch('/:id/setting', async (c) => {
         `).bind(...values).run();
       }
     } else {
-      // 创建新设置记录
+      // 创建新设置记�?
       await c.env.DB.prepare(`
         INSERT INTO user_setting (user_id, locale, appearance, memo_visibility, created_ts, updated_ts)
         VALUES (?, ?, ?, ?, ?, ?)
@@ -378,7 +378,7 @@ userRoutes.get('/:id/stats', async (c) => {
       return c.json({ message: 'Unauthorized' }, 401);
     }
 
-    // 检查权限：只能获取自己的统计，或者HOST可以获取任何人
+    // 检查权限：只能获取自己的统计，或者HOST可以获取任何�?
     const targetUser = await c.env.DB.prepare(
       'SELECT * FROM user WHERE id = ? AND row_status = ?'
     ).bind(userId, 'NORMAL').first();
@@ -410,13 +410,13 @@ userRoutes.get('/:id/stats', async (c) => {
     `).bind('NORMAL', userId).all();
 
     const tagCount: Record<string, number> = {};
-    console.log('🏷️ Backend - tagStats results:', tagStats.results);
+    console.log('🏷�?Backend - tagStats results:', tagStats.results);
     for (const row of tagStats.results || []) {
       tagCount[(row as any).name] = (row as any).count;
     }
-    console.log('🏷️ Backend - processed tagCount:', tagCount);
+    console.log('🏷�?Backend - processed tagCount:', tagCount);
 
-    // 获取每日笔记统计（最近30天）
+    // 获取每日笔记统计（最�?0天）
     const thirtyDaysAgo = Math.floor(Date.now() / 1000) - (30 * 24 * 60 * 60);
     const dailyStats = await c.env.DB.prepare(`
       SELECT 
@@ -462,14 +462,39 @@ userRoutes.get('/:id/stats', async (c) => {
 
     const pinnedMemoNames = (pinnedMemos.results || []).map((row: any) => `memos/${row.id}`);
 
+    // 计算memo类型统计
+    const linkCount = await c.env.DB.prepare(`
+      SELECT COUNT(*) as count
+      FROM memo m
+      WHERE m.creator_id = ? AND m.row_status = ? AND m.content LIKE '%http%'
+    `).bind(userId.toString(), 'NORMAL').first();
+
+    const codeCount = await c.env.DB.prepare(`
+      SELECT COUNT(*) as count
+      FROM memo m
+      WHERE m.creator_id = ? AND m.row_status = ? AND (m.content LIKE '%```%' OR m.content LIKE '%`%')
+    `).bind(userId.toString(), 'NORMAL').first();
+
+    const todoCount = await c.env.DB.prepare(`
+      SELECT COUNT(*) as count
+      FROM memo m
+      WHERE m.creator_id = ? AND m.row_status = ? AND m.content LIKE '%- [%]%'
+    `).bind(userId.toString(), 'NORMAL').first();
+
+    const undoCount = await c.env.DB.prepare(`
+      SELECT COUNT(*) as count
+      FROM memo m
+      WHERE m.creator_id = ? AND m.row_status = ? AND m.content LIKE '%- [ ]%'
+    `).bind(userId.toString(), 'NORMAL').first();
+
     return c.json({
       name: `users/${userId}`,
       memoDisplayTimestamps,
       memoTypeStats: {
-        totalMemoCount,
-        dailyMemoCount: dailyCountResult?.count || 0,
-        weeklyMemoCount: weeklyCountResult?.count || 0,
-        monthlyMemoCount: monthlyCountResult?.count || 0,
+        linkCount: linkCount?.count || 0,
+        codeCount: codeCount?.count || 0,
+        todoCount: todoCount?.count || 0,
+        undoCount: undoCount?.count || 0,
       },
       tagCount,
       pinnedMemos: pinnedMemoNames,
@@ -496,7 +521,7 @@ userRoutes.get('/stats', async (c) => {
 
     const userStats = [];
     for (const user of users.results || []) {
-      const userId = user.id;
+      const userId = (user as any).id;
       
       // 获取用户的笔记总数
       const memoCountResult = await c.env.DB.prepare(
@@ -521,7 +546,7 @@ userRoutes.get('/stats', async (c) => {
         tagCount[(row as any).name] = (row as any).count;
       }
 
-      // 获取每日笔记统计（最近30天）
+      // 获取每日笔记统计（最�?0天）
       const thirtyDaysAgo = Math.floor(Date.now() / 1000) - (30 * 24 * 60 * 60);
       const dailyStats = await c.env.DB.prepare(`
         SELECT 
@@ -567,14 +592,39 @@ userRoutes.get('/stats', async (c) => {
 
       const pinnedMemoNames = (pinnedMemos.results || []).map((row: any) => `memos/${row.id}`);
 
+      // 计算memo类型统计
+      const linkCount = await c.env.DB.prepare(`
+        SELECT COUNT(*) as count
+        FROM memo m
+        WHERE m.creator_id = ? AND m.row_status = ? AND m.content LIKE '%http%'
+      `).bind(userId.toString(), 'NORMAL').first();
+
+      const codeCount = await c.env.DB.prepare(`
+        SELECT COUNT(*) as count
+        FROM memo m
+        WHERE m.creator_id = ? AND m.row_status = ? AND (m.content LIKE '%```%' OR m.content LIKE '%`%')
+      `).bind(userId.toString(), 'NORMAL').first();
+
+      const todoCount = await c.env.DB.prepare(`
+        SELECT COUNT(*) as count
+        FROM memo m
+        WHERE m.creator_id = ? AND m.row_status = ? AND m.content LIKE '%- [%]%'
+      `).bind(userId.toString(), 'NORMAL').first();
+
+      const undoCount = await c.env.DB.prepare(`
+        SELECT COUNT(*) as count
+        FROM memo m
+        WHERE m.creator_id = ? AND m.row_status = ? AND m.content LIKE '%- [ ]%'
+      `).bind(userId.toString(), 'NORMAL').first();
+
       userStats.push({
         name: `users/${userId}`,
         memoDisplayTimestamps,
         memoTypeStats: {
-          totalMemoCount,
-          dailyMemoCount: dailyCountResult?.count || 0,
-          weeklyMemoCount: weeklyCountResult?.count || 0,
-          monthlyMemoCount: monthlyCountResult?.count || 0,
+          linkCount: linkCount?.count || 0,
+          codeCount: codeCount?.count || 0,
+          todoCount: todoCount?.count || 0,
+          undoCount: undoCount?.count || 0,
         },
         tagCount,
         pinnedMemos: pinnedMemoNames,
