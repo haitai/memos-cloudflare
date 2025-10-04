@@ -347,7 +347,7 @@ class ApiClient {
       createTime: memo.createdTs ? new Date(memo.createdTs * 1000) : new Date(),
       updateTime: memo.updatedTs ? new Date(memo.updatedTs * 1000) : new Date(),
       displayTime: memo.createdTs ? new Date(memo.createdTs * 1000) : new Date(),
-      state: memo.rowStatus === 'ARCHIVED' ? 'ARCHIVED' : 'NORMAL',
+      rowStatus: memo.rowStatus === 'ARCHIVED' ? 'ARCHIVED' : 'NORMAL',
       location: memo.location || undefined,
     };
   }

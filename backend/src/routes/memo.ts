@@ -230,7 +230,7 @@ memoRoutes.patch('/:id', async (c) => {
       return c.json({ message: 'Forbidden' }, 403);
     }
 
-    const { content, visibility, resourceIdList, resources = [] } = await c.req.json();
+    const { content, visibility, rowStatus, resourceIdList, resources = [] } = await c.req.json();
     const now = Math.floor(Date.now() / 1000);
 
     // 构建更新字段
@@ -246,7 +246,11 @@ memoRoutes.patch('/:id', async (c) => {
       updates.push('visibility = ?');
       values.push(visibility);
     }
-
+    // 支持归档
+    if (rowStatus !== undefined) {
+      updates.push('row_status = ?');
+      values.push(rowStatus);
+    }
     updates.push('updated_ts = ?');
     values.push(now);
     values.push(memoId);
