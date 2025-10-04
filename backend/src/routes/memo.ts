@@ -143,6 +143,19 @@ memoRoutes.get('/', async (c) => {
 		});
 	  }
 	  // 你可以在这里继续处理 tag_search、其他条件
+	  const tag_search = oldFilter.match(/tag_search == \[([^\]]+)\]/);
+	  if (tag_search) {
+		// 提取内容关键词数组
+		const tags = JSON.parse(`[${tag_search[1]}]`);
+		tags.forEach((tag: string) => {
+			whereClause += ` AND EXISTS (
+			SELECT 1 FROM memo_tag mt 
+			JOIN tag t ON mt.tag_id = t.id 
+			WHERE mt.memo_id = m.id AND t.name = ?
+		)`;
+		  params.push(`%${tag}%`);
+		});
+	  }
 	}
     if (visibility) {
       whereClause += ' AND m.visibility = ?';
