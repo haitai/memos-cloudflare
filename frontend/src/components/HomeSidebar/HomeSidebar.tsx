@@ -21,18 +21,11 @@ interface Props {
 const HomeSidebar = observer((props: Props) => {
   const location = useLocation();
   const currentUser = useCurrentUser();
-	useEffect(() => {
-	  async function fetchTags() {
-		// 假定 getTags() 能返回 [{ name: "tag", count: 3 }, ...]
-		const tags = await apiClient.getTags();
-		// 转换为 { tagName: count }
-		const tagCountObj = {};
-		tags.forEach(t => tagCountObj[t.name] = t.memo_count);
-		userStore.state.tagCount = tagCountObj;
-	  }
-
-	  fetchTags();
-	}, []);
+  useEffect(() => {
+    if (userStore.state.currentUser) {
+      userStore.fetchUserStats(userStore.state.currentUser);
+    }
+  }, [userStore.state.currentUser]);
   useDebounce(
     async () => {
       let parent: string | undefined = undefined;
