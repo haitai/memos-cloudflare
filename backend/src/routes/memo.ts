@@ -121,6 +121,7 @@ memoRoutes.get('/', async (c) => {
     const visibility = url.searchParams.get('visibility');
     const limit = parseInt(url.searchParams.get('limit') || '50');
     const offset = parseInt(url.searchParams.get('offset') || '0');
+	const oldFilter = url.searchParams.get('oldFilter'); // 例如：content_search == ["hello"] && tag_search == ["tag1"]
 
     let whereClause = 'WHERE m.row_status = ?';
     const params = [rowStatus];
@@ -129,7 +130,20 @@ memoRoutes.get('/', async (c) => {
       whereClause += ' AND m.creator_id = ?';
       params.push(creatorId);
     }
-
+	// 处理内容搜索
+	if (oldFilter) {
+	  // 匹配 content_search == ["xxx"]
+	  const contentSearchMatch = oldFilter.match(/content_search == \[([^\]]+)\]/);
+	  if (contentSearchMatch) {
+		// 提取内容关键词数组
+		const words = JSON.parse(`[${contentSearchMatch[1]}]`);
+		words.forEach((word: string) => {
+		  whereClause += ' AND m.content LIKE ?';
+		  params.push(`%${word}%`);
+		});
+	  }
+	  // 你可以在这里继续处理 tag_search、其他条件
+	}
     if (visibility) {
       whereClause += ' AND m.visibility = ?';
       params.push(visibility);
@@ -230,9 +244,17 @@ memoRoutes.patch('/:id', async (c) => {
       return c.json({ message: 'Forbidden' }, 403);
     }
 
-    const { content, visibility, rowStatus, resourceIdList, resources = [] } = await c.req.json();
+    const { content, visibility, state, resourceIdList, resources = [] } = await c.req.json();
     const now = Math.floor(Date.now() / 1000);
-
+	// 新增：将 state 转为 rowStatus
+	let rowStatus;
+	if (state !== undefined) {
+	  if (state === 'ARCHIVED') {
+		rowStatus = 'ARCHIVED';
+	  } else if (state === 'NORMAL') {
+		rowStatus = 'NORMAL';
+	  }
+	}
     // 构建更新字段
     const updates = [];
     const values = [];
