@@ -6,6 +6,7 @@ import { Shortcut } from "@/types/proto/api/v1/shortcut_service";
 import { User, UserSetting, UserStats } from "@/types/proto/api/v1/user_service";
 import { findNearestMatchedLanguage } from "@/utils/i18n";
 import workspaceStore from "./workspace";
+import { tagServiceClient } from "@/grpcweb";
 
 class LocalState {
   currentUser?: string;
