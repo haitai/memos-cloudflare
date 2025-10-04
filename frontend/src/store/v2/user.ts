@@ -164,6 +164,7 @@ const userStore = (() => {
 		tagCount[tag.name] = tag.memo_count;
 	  }
 	  state.setPartial({ tagCount });
+	  console.log(state.tagCount);
 	};
   const fetchInboxes = async () => {
     const { inboxes } = await inboxServiceClient.listInboxes({});

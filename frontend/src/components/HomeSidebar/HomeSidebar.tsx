@@ -17,9 +17,6 @@ interface Props {
   className?: string;
 }
 
-useEffect(() => {
-  userStore.fetchTags(); // 或 fetchTagCount
-}, []);
 
 const HomeSidebar = observer((props: Props) => {
   const location = useLocation();
