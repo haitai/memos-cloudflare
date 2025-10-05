@@ -1,0 +1,88 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Build outputs
+dist/
+build/
+.output/
+
+# Wrangler
+.wrangler/
+wrangler.toml.backup
+backend/wrangler.toml  # 包含敏感配置信息，使用wrangler.toml.example作为模板
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.dev.vars
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.temp
+
+# Test coverage
+coverage/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Secrets and credentials
+*.pem
+*.key
+*.cert
+
+# Debug files
+debug-*.js
+test-*.js
+quick-test.js
+manual-*.js
+comprehensive-*.js
+final-*.js
+fresh-start.sh
+
+# Documentation (optional, uncomment if needed)
+# *.md 
+# 项目重构后的额外忽略
+backend/node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+docs/temp/
+
+# Editor files
+.cursor/
+.vscode/
+start-dev.bat
+start-dev.ps1
+catch-bust

@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "description": "Routes configuration for Memos frontend",
+  "include": [
+    "/*"
+  ],
+  "exclude": [
+    "/api/*"
+  ]
+} 
