@@ -85,4 +85,6 @@ docs/temp/
 .vscode/
 start-dev.bat
 start-dev.ps1
-catch-bust
+.catch-bust
+.deployment-trigger
+

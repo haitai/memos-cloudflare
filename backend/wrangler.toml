@@ -6,7 +6,7 @@ compatibility_flags = ["nodejs_compat"]
 
 [vars]
 LOG_LEVEL = "info"
-BASE_URL = "http://127.0.0.1:8787"
+BASE_URL = "https://memos-cloudflare.haitai.workers.dev"
 
 # Secrets - set via wrangler secret put
 # JWT_SECRET
@@ -18,7 +18,7 @@ BASE_URL = "http://127.0.0.1:8787"
 [[d1_databases]]
 binding = "DB"
 database_name = "memos"
-database_id = "06f11440-658a-46af-81bd-1bfbed1f7daa"  # 替换为您的实际数据库ID
+database_id = "f21ca97f-e7a6-4588-ac6e-8e8939982786"  # 替换为您的实际数据库ID
 
 [env.staging]
 name = "memos-cloudflare-staging"
