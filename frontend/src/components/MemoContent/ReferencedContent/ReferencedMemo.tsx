@@ -35,7 +35,7 @@ const ReferencedMemo = observer(({ resourceId: uid, params: paramsStr }: Props) 
   const displayContent = paramsText || (memo.snippet.length > 12 ? `${memo.snippet.slice(0, 12)}...` : memo.snippet);
 
   const handleGotoMemoDetailPage = () => {
-    navigateTo(`/${memo.name}`, {
+    navigateTo(`/memos/${memo.id}`, {
       state: {
         from: context.parentPage,
       },

@@ -65,16 +65,16 @@ const MemoRelationListView = (props: Props) => {
               <Link
                 key={memo.name}
                 className="w-auto max-w-full flex flex-row justify-start items-center text-sm leading-5 text-gray-600 dark:text-gray-400 dark:border-zinc-700 dark:bg-zinc-900 hover:underline"
-                to={`/m/${memo.uid}`}
+                to={`/memos/${memo.id}`}
                 viewTransition
                 state={{
                   from: parentPage,
                 }}
               >
                 <span className="text-xs opacity-60 leading-4 border border-zinc-200 font-mono px-1 rounded-full mr-1 dark:border-zinc-700">
-                  {memo.uid.slice(0, 6)}
+                  {memo.id || memo.name?.split('/').pop() || 'N/A'}
                 </span>
-                <span className="truncate">{memo.snippet}</span>
+                <span className="truncate">{memo.snippet || memo.content?.slice(0, 50) || 'No content'}</span>
               </Link>
             );
           })}
@@ -87,16 +87,16 @@ const MemoRelationListView = (props: Props) => {
               <Link
                 key={memo.name}
                 className="w-auto max-w-full flex flex-row justify-start items-center text-sm leading-5 text-gray-600 dark:text-gray-400 dark:border-zinc-700 dark:bg-zinc-900 hover:underline"
-                to={`/m/${memo.uid}`}
+                to={`/memos/${memo.id}`}
                 viewTransition
                 state={{
                   from: parentPage,
                 }}
               >
                 <span className="text-xs opacity-60 leading-4 border border-zinc-200 font-mono px-1 rounded-full mr-1 dark:border-zinc-700">
-                  {memo.uid.slice(0, 6)}
+                  {memo.id || memo.name?.split('/').pop() || 'N/A'}
                 </span>
-                <span className="truncate">{memo.snippet}</span>
+                <span className="truncate">{memo.snippet || memo.content?.slice(0, 50) || 'No content'}</span>
               </Link>
             );
           })}

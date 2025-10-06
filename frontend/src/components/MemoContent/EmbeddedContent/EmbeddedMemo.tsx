@@ -79,7 +79,7 @@ const EmbeddedMemo = observer(({ resourceId: uid, params: paramsStr }: Props) =>
           >
             {extractMemoIdFromName(memo.name).slice(0, 6)}
           </span>
-          <Link className="opacity-60 hover:opacity-80" to={`/${memo.name}`} state={{ from: context.parentPage }} viewTransition>
+          <Link className="opacity-60 hover:opacity-80" to={`/memos/${memo.id}`} state={{ from: context.parentPage }} viewTransition>
             <ArrowUpRightIcon className="w-5 h-auto" />
           </Link>
         </div>

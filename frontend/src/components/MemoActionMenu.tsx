@@ -49,7 +49,7 @@ const MemoActionMenu = observer((props: Props) => {
   const location = useLocation();
   const navigateTo = useNavigateTo();
   const hasCompletedTaskList = checkHasCompletedTaskList(memo);
-  const isInMemoDetailPage = location.pathname.startsWith(`/${memo.name}`);
+  const isInMemoDetailPage = location.pathname.startsWith(`/memos/${memo.id}`);
   const isComment = Boolean(memo.parent);
   const isArchived = memo.state === State.ARCHIVED;
 
@@ -114,7 +114,7 @@ const MemoActionMenu = observer((props: Props) => {
   };
 
   const handleCopyLink = () => {
-    copy(`${window.location.origin}/${memo.name}`);
+    copy(`${window.location.origin}/memos/${memo.id}`);
     toast.success(t("message.succeed-copy-link"));
   };
 

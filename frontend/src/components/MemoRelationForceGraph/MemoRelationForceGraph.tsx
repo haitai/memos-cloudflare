@@ -30,7 +30,7 @@ const MemoRelationForceGraph = ({ className, memo, parentPage }: Props) => {
 
   const onNodeClick = (node: NodeObject<NodeType>) => {
     if (node.memo.name === memo.name) return;
-    navigateTo(`/${memo.name}`, {
+    navigateTo(`/memos/${memo.id}`, {
       state: {
         from: parentPage,
       },

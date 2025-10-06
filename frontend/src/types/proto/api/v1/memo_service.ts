@@ -63,6 +63,10 @@ export function visibilityToNumber(object: Visibility): number {
 
 export interface Memo {
   /**
+   * The ID of the memo.
+   */
+  id: number;
+  /**
    * The name of the memo.
    * Format: memos/{memo}, memo is the user defined id or uuid.
    */

@@ -18,9 +18,13 @@ const RelationListView = observer((props: Props) => {
       const requests = relationList
         .filter((relation) => relation.type === MemoRelation_Type.REFERENCE)
         .map(async (relation) => {
-          return await memoStore.getOrFetchMemoByName(relation.relatedMemo!.name, { skipStore: true });
+          console.log('🔗 Fetching memo for relation:', relation.relatedMemo?.name);
+          const memo = await memoStore.getOrFetchMemoByName(relation.relatedMemo!.name, { skipStore: true });
+          console.log('🔗 Fetched memo:', memo);
+          return memo;
         });
       const list = await Promise.all(requests);
+      console.log('🔗 Final referencing memo list:', list);
       setReferencingMemoList(list);
     })();
   }, [relationList]);
@@ -41,7 +45,9 @@ const RelationListView = observer((props: Props) => {
                 onClick={() => handleDeleteRelation(memo)}
               >
                 <LinkIcon className="w-4 h-auto shrink-0 opacity-80" />
-                <span className="mx-1 max-w-full text-ellipsis whitespace-nowrap overflow-hidden">{memo.snippet}</span>
+                <span className="mx-1 max-w-full text-ellipsis whitespace-nowrap overflow-hidden">
+                  {memo.snippet || memo.content?.slice(0, 50) || 'No content'}
+                </span>
                 <XIcon className="w-4 h-auto cursor-pointer shrink-0 opacity-60 hover:opacity-100" />
               </div>
             );

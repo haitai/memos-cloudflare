@@ -24,7 +24,7 @@ memoRoutes.post('/', async (c) => {
       return c.json({ message: 'Unauthorized' }, 401);
     }
 
-    const { content, visibility = 'PRIVATE', resourceIdList = [], resources = [], location } = await c.req.json();
+    const { content, visibility = 'PRIVATE', resourceIdList = [], resources = [], relations = [], location } = await c.req.json();
     
     if (!content) {
       return c.json({ message: 'Content is required' }, 400);
@@ -100,6 +100,45 @@ memoRoutes.post('/', async (c) => {
         await c.env.DB.prepare(`
           INSERT INTO memo_resource (memo_id, resource_id) VALUES (?, ?)
         `).bind(memoId, resourceId).run();
+      }
+    }
+
+    // 处理memo关系
+    if (relations.length > 0) {
+      console.log('🔗 Processing memo relations...', JSON.stringify(relations, null, 2));
+      for (const relation of relations) {
+        try {
+          // 从relatedMemo.name中提取memo ID，格式：memos/{id}
+          const relatedMemoName = relation.relatedMemo?.name;
+          console.log(`🔗 Processing relation with relatedMemo: ${relatedMemoName}`);
+          
+          if (relatedMemoName && relatedMemoName.startsWith('memos/')) {
+            const relatedMemoId = parseInt(relatedMemoName.replace('memos/', ''));
+            if (!isNaN(relatedMemoId)) {
+              // 检查被引用的memo是否存在
+              const relatedMemo = await c.env.DB.prepare(
+                'SELECT id FROM memo WHERE id = ? AND row_status = ?'
+              ).bind(relatedMemoId, 'NORMAL').first();
+              
+              if (relatedMemo) {
+                await c.env.DB.prepare(`
+                  INSERT INTO memo_relation (memo_id, related_memo_id, type, created_ts)
+                  VALUES (?, ?, ?, ?)
+                `).bind(memoId, relatedMemoId, relation.type || 'REFERENCE', now).run();
+                console.log(`✅ Created relation: memo ${memoId} -> memo ${relatedMemoId} (${relation.type || 'REFERENCE'})`);
+              } else {
+                console.log(`❌ Related memo not found: ${relatedMemoId}`);
+              }
+            } else {
+              console.log(`❌ Invalid related memo ID: ${relatedMemoName}`);
+            }
+          } else {
+            console.log(`❌ Invalid related memo name format: ${relatedMemoName}`);
+          }
+        } catch (relationError) {
+          console.error('❌ Error creating memo relation:', relationError);
+          // 继续处理其他关系，即使某个关系创建失败
+        }
       }
     }
 
@@ -363,7 +402,7 @@ memoRoutes.patch('/:id', async (c) => {
       return c.json({ message: 'Forbidden' }, 403);
     }
 
-    const { content, visibility, state, pinned, resourceIdList, resources = [], location } = await c.req.json();
+    const { content, visibility, state, pinned, resourceIdList, resources = [], relations, location } = await c.req.json();
     const now = Math.floor(Date.now() / 1000);
 	// 新增：将 state 转为 rowStatus
 	let rowStatus;
@@ -460,6 +499,53 @@ memoRoutes.patch('/:id', async (c) => {
           await c.env.DB.prepare(`
             INSERT INTO memo_resource (memo_id, resource_id) VALUES (?, ?)
           `).bind(memoId, resourceId).run();
+        }
+      }
+    }
+
+    // 处理memo关系更新
+    if (relations !== undefined) {
+      console.log('🔗 Updating memo relations...', JSON.stringify(relations, null, 2));
+      // 删除现有关联
+      await c.env.DB.prepare(
+        'DELETE FROM memo_relation WHERE memo_id = ?'
+      ).bind(memoId).run();
+
+      // 添加新关联
+      if (relations.length > 0) {
+        for (const relation of relations) {
+          try {
+            // 从relatedMemo.name中提取memo ID，格式：memos/{id}
+            const relatedMemoName = relation.relatedMemo?.name;
+            console.log(`🔗 Updating relation with relatedMemo: ${relatedMemoName}`);
+            
+            if (relatedMemoName && relatedMemoName.startsWith('memos/')) {
+              const relatedMemoId = parseInt(relatedMemoName.replace('memos/', ''));
+              if (!isNaN(relatedMemoId)) {
+                // 检查被引用的memo是否存在
+                const relatedMemo = await c.env.DB.prepare(
+                  'SELECT id FROM memo WHERE id = ? AND row_status = ?'
+                ).bind(relatedMemoId, 'NORMAL').first();
+                
+                if (relatedMemo) {
+                  await c.env.DB.prepare(`
+                    INSERT INTO memo_relation (memo_id, related_memo_id, type, created_ts)
+                    VALUES (?, ?, ?, ?)
+                  `).bind(memoId, relatedMemoId, relation.type || 'REFERENCE', now).run();
+                  console.log(`✅ Updated relation: memo ${memoId} -> memo ${relatedMemoId} (${relation.type || 'REFERENCE'})`);
+                } else {
+                  console.log(`❌ Related memo not found: ${relatedMemoId}`);
+                }
+              } else {
+                console.log(`❌ Invalid related memo ID: ${relatedMemoName}`);
+              }
+            } else {
+              console.log(`❌ Invalid related memo name format: ${relatedMemoName}`);
+            }
+          } catch (relationError) {
+            console.error('❌ Error updating memo relation:', relationError);
+            // 继续处理其他关系，即使某个关系更新失败
+          }
         }
       }
     }
@@ -602,14 +688,16 @@ async function getMemoWithDetails(db: any, memoId: number) {
 
   // 获取关系信息 - 包括这个memo作为评论者的关系和作为被评论者的关系
   const outgoingRelations = await db.prepare(`
-    SELECT mr.type, mr.related_memo_id
+    SELECT mr.type, mr.related_memo_id, m.uid as related_memo_uid, m.content as related_memo_content
     FROM memo_relation mr
+    JOIN memo m ON mr.related_memo_id = m.id
     WHERE mr.memo_id = ?
   `).bind(memoId).all();
 
   const incomingRelations = await db.prepare(`
-    SELECT mr.type, mr.memo_id
+    SELECT mr.type, mr.memo_id, m.uid as memo_uid, m.content as memo_content
     FROM memo_relation mr
+    JOIN memo m ON mr.memo_id = m.id
     WHERE mr.related_memo_id = ?
   `).bind(memoId).all();
 
@@ -624,13 +712,23 @@ async function getMemoWithDetails(db: any, memoId: number) {
 
   const relationList = [
     ...(outgoingRelations.results || []).map((r: any) => ({
-      memo: `memos/${memoId}`,
-      relatedMemo: `memos/${r.related_memo_id}`,
+      memo: { name: `memos/${memoId}`, uid: memo.uid, id: memoId },
+      relatedMemo: { 
+        name: `memos/${r.related_memo_id}`, 
+        uid: r.related_memo_uid,
+        id: r.related_memo_id,
+        snippet: r.related_memo_content ? r.related_memo_content.slice(0, 100) : ''
+      },
       type: r.type
     })),
     ...(incomingRelations.results || []).map((r: any) => ({
-      memo: `memos/${r.memo_id}`,
-      relatedMemo: `memos/${memoId}`,
+      memo: { 
+        name: `memos/${r.memo_id}`, 
+        uid: r.memo_uid,
+        id: r.memo_id,
+        snippet: r.memo_content ? r.memo_content.slice(0, 100) : ''
+      },
+      relatedMemo: { name: `memos/${memoId}`, uid: memo.uid, id: memoId },
       type: r.type
     }))
   ];
@@ -659,6 +757,7 @@ async function getMemoWithDetails(db: any, memoId: number) {
     tags: tagList,
     relations: relationList, // 新增：关系信息
     reactions: reactionList, // 新增：reaction信息
+    snippet: memo.content ? memo.content.slice(0, 100) : '', // 添加snippet字段
     location: memo.location_placeholder || memo.location_latitude || memo.location_longitude ? {
       placeholder: memo.location_placeholder || '',
       latitude: memo.location_latitude || 0,

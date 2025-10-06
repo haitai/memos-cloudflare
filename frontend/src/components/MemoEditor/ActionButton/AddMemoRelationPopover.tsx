@@ -113,12 +113,12 @@ const AddMemoRelationPopover = (props: Props) => {
         uniqBy(
           [
             ...selectedMemos.map((memo) => ({
-              memo: MemoRelation_Memo.fromPartial({ name: memo.name }),
+              memo: context.memoName ? MemoRelation_Memo.fromPartial({ name: context.memoName }) : undefined,
               relatedMemo: MemoRelation_Memo.fromPartial({ name: memo.name }),
               type: MemoRelation_Type.REFERENCE,
             })),
             ...context.relationList,
-          ].filter((relation) => relation.relatedMemo !== context.memoName),
+          ].filter((relation) => relation.relatedMemo?.name !== context.memoName),
           "relatedMemo",
         ),
       );

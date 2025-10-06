@@ -54,7 +54,7 @@ const MemoView: React.FC<Props> = observer((props: Props) => {
   const relativeTimeFormat = Date.now() - memo.displayTime!.getTime() > 1000 * 60 * 60 * 24 ? "datetime" : "auto";
   const isArchived = memo.state === State.ARCHIVED;
   const readonly = memo.creator !== user?.name && !isSuperUser(user);
-  const isInMemoDetailPage = location.pathname.startsWith(`/${memo.name}`);
+  const isInMemoDetailPage = location.pathname.startsWith(`/memos/${memo.id}`);
   const parentPage = props.parentPage || location.pathname;
   const nsfw =
     workspaceMemoRelatedSetting.enableBlurNsfwContent &&
@@ -67,7 +67,7 @@ const MemoView: React.FC<Props> = observer((props: Props) => {
   }, []);
 
   const handleGotoMemoDetailPage = useCallback(() => {
-    navigateTo(`/${memo.name}`, {
+    navigateTo(`/memos/${memo.id}`, {
       state: {
         from: parentPage,
       },
@@ -184,7 +184,7 @@ const MemoView: React.FC<Props> = observer((props: Props) => {
                 "flex flex-row justify-start items-center hover:opacity-70",
                 commentAmount === 0 && "invisible group-hover:visible",
               )}
-              to={`/${memo.name}#comments`}
+              to={`/memos/${memo.id}#comments`}
               viewTransition
               state={{
                 from: parentPage,

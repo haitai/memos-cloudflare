@@ -33,8 +33,8 @@ const MemoDetail = observer(() => {
   const [parentMemo, setParentMemo] = useState<Memo | undefined>(undefined);
   const [showCommentEditor, setShowCommentEditor] = useState(false);
   const commentRelations =
-    memo?.relations.filter((relation) => relation.relatedMemo === memo.name && relation.type === MemoRelation_Type.COMMENT) || [];
-  const comments = commentRelations.map((relation) => memoStore.getMemoByName(relation.memo)).filter((memo) => memo) as any as Memo[];
+    memo?.relations.filter((relation) => relation.relatedMemo?.name === memo.name && relation.type === MemoRelation_Type.COMMENT) || [];
+  const comments = commentRelations.map((relation) => memoStore.getMemoByName(relation.memo?.name || '')).filter((memo) => memo) as any as Memo[];
   const showCreateCommentButton = workspaceMemoRelatedSetting.enableComment && currentUser && !showCommentEditor;
 
   // Prepare memo.
@@ -63,7 +63,7 @@ const MemoDetail = observer(() => {
       } else {
         setParentMemo(undefined);
       }
-      await Promise.all(commentRelations.map((relation) => memoStore.getOrFetchMemoByName(relation.memo)));
+      await Promise.all(commentRelations.map((relation) => memoStore.getOrFetchMemoByName(relation.memo?.name || '')));
     })();
   }, [memo]);
 

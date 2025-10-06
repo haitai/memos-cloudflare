@@ -231,10 +231,27 @@ class ApiClient {
       } else if (line.trim() === '') {
         // Empty line - skip
         i++;
+      } else if (line.trim().match(/^!\[\[([^\]]+)\]\]$/)) {
+        // Standalone embed syntax - create embedded content node directly
+        const embedMatch = line.trim().match(/^!\[\[([^\]]+)\]\]$/);
+        if (embedMatch) {
+          const embedContent = embedMatch[1];
+          const [resourceName, paramsStr] = embedContent.split('?');
+          const params = paramsStr || '';
+          
+          nodes.push({
+            type: NodeType.EMBEDDED_CONTENT,
+            embeddedContentNode: {
+              resourceName: resourceName,
+              params: params
+            }
+          });
+        }
+        i++;
       } else {
         // Regular paragraph - collect consecutive non-empty lines
         const paragraphLines = [];
-        while (i < lines.length && lines[i].trim() !== '' && !lines[i].trim().startsWith('```')) {
+        while (i < lines.length && lines[i].trim() !== '' && !lines[i].trim().startsWith('```') && !lines[i].trim().match(/^!\[\[([^\]]+)\]\]$/)) {
           paragraphLines.push(lines[i]);
           i++;
         }
@@ -278,11 +295,12 @@ class ApiClient {
     const children = [];
     const tagRegex = /#([a-zA-Z0-9\u4e00-\u9fa5_-]+)/g;
     const linkRegex = /(https?:\/\/[^\s]+)/g;
+    const embedRegex = /!\[\[([^\]]+)\]\]/g;
     
     let lastIndex = 0;
     let match;
     
-    // Find all tags and links
+    // Find all tags, links, and embeds
     const matches = [];
     
     // Find tags
@@ -303,6 +321,17 @@ class ApiClient {
         start: match.index,
         end: match.index + match[0].length,
         content: match[0]
+      });
+    }
+    
+    // Find embeds
+    linkRegex.lastIndex = 0; // Reset regex
+    while ((match = embedRegex.exec(line)) !== null) {
+      matches.push({
+        type: 'embed',
+        start: match.index,
+        end: match.index + match[0].length,
+        content: match[1]
       });
     }
     
@@ -337,6 +366,19 @@ class ApiClient {
           type: NodeType.AUTO_LINK,
           autoLinkNode: {
             url: match.content
+          }
+        });
+      } else if (match.type === 'embed') {
+        // Parse embed content to extract resource name and params
+        const embedContent = match.content;
+        const [resourceName, paramsStr] = embedContent.split('?');
+        const params = paramsStr || '';
+        
+        children.push({
+          type: NodeType.EMBEDDED_CONTENT,
+          embeddedContentNode: {
+            resourceName: resourceName,
+            params: params
           }
         });
       }
@@ -385,6 +427,7 @@ class ApiClient {
     const formattedMemos = Array.isArray(memos) ? memos.map(memo => {
       const properties = this.calculateMemoProperties(memo.content || '');
       return {
+        id: memo.id, // 添加id字段
         name: `memos/${memo.id}`,
         uid: memo.uid || `memo-uid-${memo.id}`,
         creator: `users/${memo.creatorId}`,
@@ -396,7 +439,7 @@ class ApiClient {
         resources: memo.resources || [], // 使用后端返回的完整资源对象数组
         relations: memo.relations || [],
         reactions: memo.reactions || [],
-        snippet: memo.content ? memo.content.slice(0, 100) : '',
+        snippet: memo.snippet || (memo.content ? memo.content.slice(0, 100) : ''),
         parent: memo.parent || '',
         createTime: memo.createdTs ? new Date(memo.createdTs * 1000) : new Date(),
         updateTime: memo.updatedTs ? new Date(memo.updatedTs * 1000) : new Date(),
@@ -422,6 +465,7 @@ class ApiClient {
     
     // 转换为前端期望的protobuf格式
     return {
+      id: memo.id, // 添加id字段
       name: `memos/${memo.id}`,
       uid: memo.uid || `memo-uid-${memo.id}`,
       creator: `users/${memo.creatorId}`,
@@ -433,7 +477,7 @@ class ApiClient {
       resources: memo.resources || [], // 使用后端返回的完整资源对象数组
       relations: memo.relations || [],
       reactions: memo.reactions || [],
-      snippet: memo.content ? memo.content.slice(0, 100) : '',
+      snippet: memo.snippet || (memo.content ? memo.content.slice(0, 100) : ''),
       parent: memo.parent || '',
       createTime: memo.createdTs ? new Date(memo.createdTs * 1000) : new Date(),
       updateTime: memo.updatedTs ? new Date(memo.updatedTs * 1000) : new Date(),
@@ -468,6 +512,7 @@ class ApiClient {
     
     // 转换为前端期望的protobuf格式
     return {
+      id: memo.id, // 添加id字段
       name: `memos/${memo.id}`,
       uid: memo.uid || `memo-uid-${memo.id}`,
       creator: `users/${memo.creatorId}`,
@@ -479,7 +524,7 @@ class ApiClient {
       resources: memo.resources || [], // 使用后端返回的完整资源对象数组
       relations: memo.relations || [],
       reactions: memo.reactions || [],
-      snippet: memo.content ? memo.content.slice(0, 100) : '',
+      snippet: memo.snippet || (memo.content ? memo.content.slice(0, 100) : ''),
       parent: memo.parent || '',
       createTime: memo.createdTs ? new Date(memo.createdTs * 1000) : new Date(),
       updateTime: memo.updatedTs ? new Date(memo.updatedTs * 1000) : new Date(),
@@ -514,6 +559,7 @@ class ApiClient {
     
     // 转换为前端期望的protobuf格式
     return {
+      id: memo.id, // 添加id字段
       name: `memos/${memo.id}`,
       uid: memo.uid || `memo-uid-${memo.id}`,
       creator: `users/${memo.creatorId}`,
@@ -525,7 +571,7 @@ class ApiClient {
       resources: memo.resources || [], // 使用后端返回的完整资源对象数组
       relations: memo.relations || [],
       reactions: memo.reactions || [],
-      snippet: memo.content ? memo.content.slice(0, 100) : '',
+      snippet: memo.snippet || (memo.content ? memo.content.slice(0, 100) : ''),
       parent: memo.parent || '',
       createTime: memo.createdTs ? new Date(memo.createdTs * 1000) : new Date(),
       updateTime: memo.updatedTs ? new Date(memo.updatedTs * 1000) : new Date(),
@@ -554,6 +600,7 @@ class ApiClient {
 
     // 转换为前端期望的protobuf格式
     return {
+      id: memo.id, // 添加id字段
       name: `memos/${memo.id}`,
       uid: memo.uid || `memo-uid-${memo.id}`,
       creator: `users/${memo.creatorId}`,
@@ -565,7 +612,7 @@ class ApiClient {
       resources: memo.resources || [],
       relations: memo.relations || [],
       reactions: memo.reactions || [],
-      snippet: memo.content ? memo.content.slice(0, 100) : '',
+      snippet: memo.snippet || (memo.content ? memo.content.slice(0, 100) : ''),
       parent: memo.parent || '',
       createTime: memo.createdTs ? new Date(memo.createdTs * 1000) : new Date(),
       updateTime: memo.updatedTs ? new Date(memo.updatedTs * 1000) : new Date(),

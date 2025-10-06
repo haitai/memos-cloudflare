@@ -50,7 +50,7 @@ const MemoCommentMessage = observer(({ inbox }: Props) => {
       return;
     }
 
-    navigateTo(`/${relatedMemo.name}`);
+    navigateTo(`/memos/${relatedMemo.id}`);
     if (inbox.status === Inbox_Status.UNREAD) {
       handleArchiveMessage(true);
     }
