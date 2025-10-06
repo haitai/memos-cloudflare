@@ -49,7 +49,7 @@ resourceRoutes.post('/blob', async (c) => {
     }
 
     const user = userPayload;
-    console.log('👤 Upload request from user:', user.id);
+    console.log('👤 Upload request from user:', user.sub);
 
     // 解析multipart form data
     const formData = await c.req.formData();
@@ -107,7 +107,7 @@ resourceRoutes.post('/blob', async (c) => {
     const result = await c.env.DB.prepare(`
       INSERT INTO resource (uid, creator_id, filename, type, size, external_link, created_ts)
       VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).bind(resourceUid, user.id, fileName, mimeType, file.size, externalLink, now).run();
+    `).bind(resourceUid, user.sub, fileName, mimeType, file.size, externalLink, now).run();
 
     if (result.success) {
       console.log('✅ Resource saved to database with ID:', result.meta.last_row_id);
@@ -116,7 +116,7 @@ resourceRoutes.post('/blob', async (c) => {
         id: result.meta.last_row_id,
         uid: resourceUid,
         name: `resources/${resourceUid}`,
-        creator: `users/${user.id}`,
+        creator: `users/${user.sub}`,
         filename: fileName,
         type: mimeType,
         size: file.size,

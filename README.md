@@ -31,6 +31,9 @@ npm install
 # 创建 D1 数据库
 npx wrangler d1 create memos
 
+# 创建 R2 存储桶
+npx wrangler r2 bucket create memos-resources
+
 # 复制配置文件并更新数据库 ID
 cp wrangler.toml.example wrangler.toml
 # 编辑 wrangler.toml，替换 YOUR_D1_DATABASE_ID 为实际的数据库 ID
