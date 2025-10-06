@@ -2,6 +2,7 @@ import { uniqueId } from "lodash-es";
 import { makeAutoObservable } from "mobx";
 import { memoServiceClient } from "@/grpcweb";
 import { CreateMemoRequest, ListMemosRequest, Memo } from "@/types/proto/api/v1/memo_service";
+import userStore from "./user";
 
 class LocalState {
   stateId: string = uniqueId();
@@ -105,6 +106,13 @@ const memoStore = (() => {
       stateId: uniqueId(),
       memoMapByName: memoMap,
     });
+    
+    // 强制更新用户统计数据
+    console.log('🔄 createMemo - triggering user stats refresh');
+    console.log('🔄 createMemo - current statsStateId:', userStore.state.statsStateId);
+    userStore.setStatsStateId();
+    console.log('🔄 createMemo - new statsStateId:', userStore.state.statsStateId);
+    
     return memo;
   };
 
@@ -120,6 +128,11 @@ const memoStore = (() => {
       stateId: uniqueId(),
       memoMapByName: memoMap,
     });
+    
+    // 强制更新用户统计数据
+    console.log('🔄 updateMemo - triggering user stats refresh');
+    userStore.setStatsStateId();
+    
     return memo;
   };
 
@@ -134,6 +147,10 @@ const memoStore = (() => {
       stateId: uniqueId(),
       memoMapByName: memoMap,
     });
+    
+    // 强制更新用户统计数据
+    console.log('🔄 deleteMemo - triggering user stats refresh');
+    userStore.setStatsStateId();
   };
 
   return {

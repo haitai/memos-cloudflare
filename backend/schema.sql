@@ -7,6 +7,7 @@ DROP TABLE IF EXISTS tag;
 DROP TABLE IF EXISTS memo;
 DROP TABLE IF EXISTS user;
 DROP TABLE IF EXISTS user_setting;
+DROP TABLE IF EXISTS workspace_setting;
 
 CREATE TABLE user (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -144,4 +145,13 @@ INSERT INTO tag (creator_id, name, created_ts) VALUES (1, 'Cloudflare', strftime
 -- 插入memo-tag关联
 INSERT INTO memo_tag (memo_id, tag_id) VALUES (1, 1);
 INSERT INTO memo_tag (memo_id, tag_id) VALUES (1, 2);
-INSERT INTO memo_tag (memo_id, tag_id) VALUES (1, 3); 
+INSERT INTO memo_tag (memo_id, tag_id) VALUES (1, 3);
+
+-- Workspace设置表
+CREATE TABLE workspace_setting (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE,
+    setting_data TEXT NOT NULL, -- JSON格式的设置数据
+    created_ts INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+    updated_ts INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+); 

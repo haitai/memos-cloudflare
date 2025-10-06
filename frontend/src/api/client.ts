@@ -714,10 +714,9 @@ class ApiClient {
         disallowChangeNickname: false,
       },
       'STORAGE': {
-        storageType: 'DATABASE',
+        storageType: 'R2',
         filepathTemplate: '{{filename}}',
         uploadSizeLimitMb: 32,
-        s3Config: undefined,
       },
       'MEMO_RELATED': {
         disallowPublicVisibility: false,
@@ -765,7 +764,7 @@ class ApiClient {
     console.log('📊 getUserStats - raw response:', stats);
     const result = {
       name: stats.name,
-      memoDisplayTimestamps: stats.memoDisplayTimestamps || [],
+      memoDisplayTimestamps: (stats.memoDisplayTimestamps || []).map((dateStr: string) => new Date(dateStr)),
       memoTypeStats: stats.memoTypeStats || {
         linkCount: 0,
         codeCount: 0,
@@ -787,7 +786,7 @@ class ApiClient {
       console.log('📊 getAllUserStats - processing stats:', stats);
       return {
         name: stats.name,
-        memoDisplayTimestamps: stats.memoDisplayTimestamps || [],
+        memoDisplayTimestamps: (stats.memoDisplayTimestamps || []).map((dateStr: string) => new Date(dateStr)),
         memoTypeStats: stats.memoTypeStats || {
           linkCount: 0,
           codeCount: 0,

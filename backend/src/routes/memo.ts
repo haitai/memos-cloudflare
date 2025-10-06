@@ -26,8 +26,9 @@ memoRoutes.post('/', async (c) => {
 
     const { content, visibility = 'PRIVATE', resourceIdList = [], resources = [], relations = [], location } = await c.req.json();
     
-    if (!content) {
-      return c.json({ message: 'Content is required' }, 400);
+    // 允许只有资源而没有文本内容的memo
+    if (!content && (!resources || resources.length === 0) && (!resourceIdList || resourceIdList.length === 0)) {
+      return c.json({ message: 'Content or resources are required' }, 400);
     }
 
     const memoUid = uuidv4();
@@ -244,6 +245,22 @@ memoRoutes.get('/', async (c) => {
 	  if (pinnedMatch) {
 		console.log('📌 Backend - Processing pinned filter');
 		whereClause += ' AND m.pinned = 1';
+	  }
+	  
+	  // 处理displayTime时间范围筛选器
+	  const displayTimeAfterMatch = oldFilter.match(/display_time_after == (\d+)/);
+	  const displayTimeBeforeMatch = oldFilter.match(/display_time_before == (\d+)/);
+	  if (displayTimeAfterMatch) {
+		const timestamp = parseInt(displayTimeAfterMatch[1]);
+		console.log('📅 Backend - Processing displayTimeAfter filter:', timestamp);
+		whereClause += ' AND m.created_ts >= ?';
+		params.push(timestamp);
+	  }
+	  if (displayTimeBeforeMatch) {
+		const timestamp = parseInt(displayTimeBeforeMatch[1]);
+		console.log('📅 Backend - Processing displayTimeBefore filter:', timestamp);
+		whereClause += ' AND m.created_ts < ?';
+		params.push(timestamp);
 	  }
 	}
     if (visibility) {

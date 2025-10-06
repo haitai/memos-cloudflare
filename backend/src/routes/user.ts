@@ -432,8 +432,18 @@ userRoutes.get('/:id/stats', async (c) => {
       ORDER BY date DESC
     `).bind(userId, 'NORMAL', thirtyDaysAgo).all();
 
-    const memoDisplayTimestamps = (dailyStats.results || []).map((row: any) => 
-      new Date(row.date).toISOString()
+    // 为每个memo返回一个时间戳，而不是每个日期一个时间戳
+    const memoDisplayTimestamps = await c.env.DB.prepare(`
+      SELECT created_ts
+      FROM memo 
+      WHERE creator_id = ? 
+        AND row_status = ? 
+        AND created_ts > ?
+      ORDER BY created_ts DESC
+    `).bind(userId, 'NORMAL', thirtyDaysAgo).all();
+    
+    const memoDisplayTimestampsList = (memoDisplayTimestamps.results || []).map((row: any) => 
+      new Date(row.created_ts * 1000).toISOString()
     );
 
     // 计算各种时间段的笔记数量
@@ -494,7 +504,7 @@ userRoutes.get('/:id/stats', async (c) => {
 
     return c.json({
       name: `users/${userId}`,
-      memoDisplayTimestamps,
+      memoDisplayTimestamps: memoDisplayTimestampsList,
       memoTypeStats: {
         linkCount: (linkCount as any)?.count || 0,
         codeCount: (codeCount as any)?.count || 0,

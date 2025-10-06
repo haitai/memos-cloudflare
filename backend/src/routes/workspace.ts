@@ -45,10 +45,18 @@ workspaceRoutes.get('/setting', async (c) => {
       return c.json({ message: 'Setting name is required' }, 400);
     }
 
-    // 从名称中提取key
+    // 从数据库获取设置
+    const setting = await c.env.DB.prepare(
+      'SELECT * FROM workspace_setting WHERE name = ?'
+    ).bind(name).first();
+
+    if (setting) {
+      // 如果数据库中有设置，返回解析后的JSON
+      return c.json(JSON.parse(setting.setting_data));
+    }
+
+    // 如果数据库中没有设置，返回默认设置
     const key = name.replace('settings/', '');
-    
-    // 根据key返回默认设置
     const defaultSettings: Record<string, any> = {
       'GENERAL': {
         name: 'settings/GENERAL',
@@ -88,20 +96,19 @@ workspaceRoutes.get('/setting', async (c) => {
       'STORAGE': {
         name: 'settings/STORAGE',
         storageSetting: {
-          storageType: 'DATABASE',
+          storageType: 'R2',
           filepathTemplate: '{{filename}}',
           uploadSizeLimitMb: 32,
-          s3Config: undefined,
         }
       }
     };
 
-    const setting = defaultSettings[key];
-    if (!setting) {
+    const defaultSetting = defaultSettings[key];
+    if (!defaultSetting) {
       return c.json({ message: 'Setting not found' }, 404);
     }
 
-    return c.json(setting);
+    return c.json(defaultSetting);
   } catch (error) {
     console.error('Get workspace setting error:', error);
     return c.json({ message: 'Internal server error' }, 500);
@@ -119,8 +126,33 @@ workspaceRoutes.post('/setting', authMiddleware, async (c) => {
     const body = await c.req.json();
     console.log('Update workspace setting:', body);
     
-    // 这里应该保存到数据库，但为了简化，我们直接返回传入的设置
-    return c.json(body.setting || body);
+    const setting = body.setting || body;
+    const settingName = setting.name;
+    const settingData = JSON.stringify(setting);
+    const now = Math.floor(Date.now() / 1000);
+
+    // 检查是否已存在设置
+    const existingSetting = await c.env.DB.prepare(
+      'SELECT * FROM workspace_setting WHERE name = ?'
+    ).bind(settingName).first();
+
+    if (existingSetting) {
+      // 更新现有设置
+      await c.env.DB.prepare(`
+        UPDATE workspace_setting 
+        SET setting_data = ?, updated_ts = ?
+        WHERE name = ?
+      `).bind(settingData, now, settingName).run();
+    } else {
+      // 创建新设置
+      await c.env.DB.prepare(`
+        INSERT INTO workspace_setting (name, setting_data, created_ts, updated_ts)
+        VALUES (?, ?, ?, ?)
+      `).bind(settingName, settingData, now, now).run();
+    }
+
+    console.log('Workspace setting saved successfully:', settingName);
+    return c.json(setting);
   } catch (error) {
     console.error('Update workspace setting error:', error);
     return c.json({ message: 'Internal server error' }, 500);
