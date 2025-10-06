@@ -105,6 +105,19 @@ resourceRoutes.post('/blob', async (c) => {
 
     const user = userPayload;
     console.log('👤 Upload request from user:', user.sub);
+    
+    // 根据UID查找用户ID
+    const userRecord = await c.env.DB.prepare(
+      'SELECT id FROM user WHERE uid = ?'
+    ).bind(user.sub).first();
+    
+    if (!userRecord) {
+      console.log('❌ User not found:', user.sub);
+      return c.json({ message: 'User not found' }, 404);
+    }
+    
+    const userId = userRecord.id;
+    console.log('👤 User ID found:', userId);
 
     // 解析multipart form data
     const formData = await c.req.formData();
@@ -163,7 +176,6 @@ resourceRoutes.post('/blob', async (c) => {
       }
       
       const r2Key = `${resourceUid}/${fileName}`;
-      externalLink = `r2://${r2Key}`;
       console.log('📍 R2 key:', r2Key);
       
       uploadSuccess = await uploadToR2(
@@ -171,6 +183,9 @@ resourceRoutes.post('/blob', async (c) => {
         r2Key,
         file
       );
+      
+      // 存储R2 key到数据库，但返回HTTP URL给前端
+      externalLink = `r2://${r2Key}`;
     } else {
       // 默认使用R2存储
       console.log('☁️ Using default R2 storage');
@@ -181,7 +196,6 @@ resourceRoutes.post('/blob', async (c) => {
       }
       
       const r2Key = `${resourceUid}/${fileName}`;
-      externalLink = `r2://${r2Key}`;
       console.log('📍 R2 key:', r2Key);
       
       uploadSuccess = await uploadToR2(
@@ -189,6 +203,9 @@ resourceRoutes.post('/blob', async (c) => {
         r2Key,
         file
       );
+      
+      // 存储R2 key到数据库，但返回HTTP URL给前端
+      externalLink = `r2://${r2Key}`;
     }
 
     if (!uploadSuccess) {
@@ -213,27 +230,32 @@ resourceRoutes.post('/blob', async (c) => {
       result = await c.env.DB.prepare(`
         INSERT INTO resource (uid, creator_id, filename, type, size, blob, external_link, created_ts)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      `).bind(resourceUid, user.sub, fileName, mimeType, file.size, buffer, externalLink, now).run();
+      `).bind(resourceUid, userId, fileName, mimeType, file.size, buffer, externalLink, now).run();
     } else {
       // R2存储：只存储元数据，不存储文件内容
       result = await c.env.DB.prepare(`
         INSERT INTO resource (uid, creator_id, filename, type, size, external_link, created_ts)
         VALUES (?, ?, ?, ?, ?, ?, ?)
-      `).bind(resourceUid, user.sub, fileName, mimeType, file.size, externalLink, now).run();
+      `).bind(resourceUid, userId, fileName, mimeType, file.size, externalLink, now).run();
     }
 
     if (result.success) {
       console.log('✅ Resource saved to database with ID:', result.meta.last_row_id);
       
+      // 返回HTTP URL给前端，而不是存储的协议URL
+      const httpUrl = externalLink.startsWith('r2://') || externalLink.startsWith('database://') 
+        ? `/api/resource/blob/${resourceUid}`
+        : externalLink;
+
       return c.json({
         id: result.meta.last_row_id,
         uid: resourceUid,
         name: `resources/${resourceUid}`,
-        creator: `users/${user.sub}`,
+        creator: `users/${userId}`,
         filename: fileName,
         type: mimeType,
         size: file.size,
-        externalLink: externalLink,
+        externalLink: httpUrl,
         createTime: new Date(now * 1000).toISOString(),
         updateTime: new Date(now * 1000).toISOString()
       });
@@ -243,6 +265,75 @@ resourceRoutes.post('/blob', async (c) => {
     }
   } catch (error: any) {
     console.error('Resource upload error:', error);
+    return c.json({ message: 'Internal server error', details: error.message }, 500);
+  }
+});
+
+// 文件访问端点 - 从R2或数据库获取文件
+resourceRoutes.get('/blob/:uid', async (c) => {
+  try {
+    const resourceUid = c.req.param('uid');
+    console.log('📁 Accessing resource:', resourceUid);
+
+    // 从数据库获取资源信息
+    const resource = await c.env.DB.prepare(
+      'SELECT * FROM resource WHERE uid = ?'
+    ).bind(resourceUid).first();
+
+    if (!resource) {
+      return c.json({ message: 'Resource not found' }, 404);
+    }
+
+    console.log('📋 Resource found:', {
+      uid: resource.uid,
+      filename: resource.filename,
+      type: resource.type,
+      external_link: resource.external_link
+    });
+
+    // 检查存储类型
+    if (resource.external_link.startsWith('r2://')) {
+      // 从R2获取文件
+      const r2Key = resource.external_link.replace('r2://', '');
+      console.log('☁️ Fetching from R2:', r2Key);
+
+      if (!c.env.R2) {
+        return c.json({ message: 'R2 bucket not configured' }, 500);
+      }
+
+      const r2Object = await c.env.R2.get(r2Key);
+      if (!r2Object) {
+        return c.json({ message: 'File not found in R2' }, 404);
+      }
+
+      const fileData = await r2Object.arrayBuffer();
+      return new Response(fileData, {
+        headers: {
+          'Content-Type': resource.type || 'application/octet-stream',
+          'Content-Disposition': `inline; filename="${resource.filename}"`,
+          'Cache-Control': 'public, max-age=31536000', // 1 year cache
+        },
+      });
+    } else if (resource.external_link.startsWith('database://')) {
+      // 从数据库获取文件
+      console.log('🗄️ Fetching from database');
+      
+      if (!resource.blob) {
+        return c.json({ message: 'File not found in database' }, 404);
+      }
+
+      return new Response(resource.blob, {
+        headers: {
+          'Content-Type': resource.type || 'application/octet-stream',
+          'Content-Disposition': `inline; filename="${resource.filename}"`,
+          'Cache-Control': 'public, max-age=31536000', // 1 year cache
+        },
+      });
+    } else {
+      return c.json({ message: 'Unknown storage type' }, 500);
+    }
+  } catch (error: any) {
+    console.error('Resource access error:', error);
     return c.json({ message: 'Internal server error', details: error.message }, 500);
   }
 });
