@@ -10,7 +10,7 @@ build/
 # Wrangler
 .wrangler/
 wrangler.toml.backup
-backend/wrangler.toml  # 包含敏感配置信息，使用wrangler.toml.example作为模板
+backend/wrangler.toml
 
 # Environment variables
 .env
@@ -87,4 +87,6 @@ start-dev.bat
 start-dev.ps1
 .catch-bust
 .deployment-trigger
+seed.sql
+test.txt
 
