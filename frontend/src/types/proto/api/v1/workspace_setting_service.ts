@@ -75,6 +75,8 @@ export enum WorkspaceStorageSetting_StorageType {
   LOCAL = "LOCAL",
   /** S3 - S3 is the S3 storage type. */
   S3 = "S3",
+  /** R2 - R2 is the Cloudflare R2 storage type. */
+  R2 = "R2",
   UNRECOGNIZED = "UNRECOGNIZED",
 }
 
@@ -92,6 +94,9 @@ export function workspaceStorageSetting_StorageTypeFromJSON(object: any): Worksp
     case 3:
     case "S3":
       return WorkspaceStorageSetting_StorageType.S3;
+    case 4:
+    case "R2":
+      return WorkspaceStorageSetting_StorageType.R2;
     case -1:
     case "UNRECOGNIZED":
     default:
@@ -109,6 +114,8 @@ export function workspaceStorageSetting_StorageTypeToNumber(object: WorkspaceSto
       return 2;
     case WorkspaceStorageSetting_StorageType.S3:
       return 3;
+    case WorkspaceStorageSetting_StorageType.R2:
+      return 4;
     case WorkspaceStorageSetting_StorageType.UNRECOGNIZED:
     default:
       return -1;

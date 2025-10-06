@@ -4,6 +4,33 @@ import { Env, Variables } from '../types';
 
 const resourceRoutes = new Hono<{ Bindings: Env; Variables: Variables }>();
 
+// 获取存储设置
+async function getStorageSetting(c: any) {
+  try {
+    const setting = await c.env.DB.prepare(
+      'SELECT * FROM workspace_setting WHERE name = ?'
+    ).bind('settings/STORAGE').first();
+
+    if (setting) {
+      return JSON.parse(setting.setting_data);
+    }
+
+    // 返回默认设置
+    return {
+      storageType: 'R2',
+      filepathTemplate: '{{filename}}',
+      uploadSizeLimitMb: 32,
+    };
+  } catch (error) {
+    console.error('Error getting storage setting:', error);
+    return {
+      storageType: 'R2',
+      filepathTemplate: '{{filename}}',
+      uploadSizeLimitMb: 32,
+    };
+  }
+}
+
 // R2 上传函数
 async function uploadToR2(
   bucket: any, // R2Bucket 绑定
@@ -36,6 +63,34 @@ async function uploadToR2(
       name: error instanceof Error ? error.name : undefined
     });
     return false;
+  }
+}
+
+// 数据库存储函数（将文件内容存储为BLOB）
+async function uploadToDatabase(
+  db: any,
+  resourceUid: string,
+  fileName: string,
+  mimeType: string,
+  file: File
+): Promise<{ success: boolean; buffer?: Buffer }> {
+  try {
+    console.log('📤 Starting database upload for file:', fileName);
+    
+    // 将文件转换为ArrayBuffer
+    const arrayBuffer = await file.arrayBuffer();
+    const uint8Array = new Uint8Array(arrayBuffer);
+    
+    console.log('✅ File converted to ArrayBuffer, size:', uint8Array.length);
+    
+    // 将ArrayBuffer转换为Buffer（SQLite BLOB格式）
+    const buffer = Buffer.from(uint8Array);
+    
+    console.log('✅ File converted to Buffer, size:', buffer.length);
+    return { success: true, buffer };
+  } catch (error) {
+    console.error('💥 Database upload error:', error);
+    return { success: false };
   }
 }
 
@@ -78,21 +133,63 @@ resourceRoutes.post('/blob', async (c) => {
 
     console.log('🆔 Generated resource UID:', resourceUid);
 
-    // 检查R2存储桶是否配置
-    if (!c.env.R2) {
-      console.log('❌ R2 bucket not configured - c.env.R2 is undefined');
-      return c.json({ message: 'R2 bucket not configured' }, 500);
+    // 获取存储设置
+    const storageSetting = await getStorageSetting(c);
+    console.log('📋 Storage setting:', storageSetting);
+
+    let externalLink: string;
+    let uploadSuccess: boolean;
+
+    if (storageSetting.storageType === 'DATABASE') {
+      // 使用数据库存储
+      console.log('🗄️ Using database storage');
+      const dbResult = await uploadToDatabase(
+        c.env.DB,
+        resourceUid,
+        fileName,
+        mimeType,
+        file
+      );
+      uploadSuccess = dbResult.success;
+      externalLink = `database://${resourceUid}`;
+    } else if (storageSetting.storageType === 'R2') {
+      // 使用R2存储
+      console.log('☁️ Using R2 storage');
+      
+      // 检查R2存储桶是否配置
+      if (!c.env.R2) {
+        console.log('❌ R2 bucket not configured - c.env.R2 is undefined');
+        return c.json({ message: 'R2 bucket not configured' }, 500);
+      }
+      
+      const r2Key = `${resourceUid}/${fileName}`;
+      externalLink = `r2://${r2Key}`;
+      console.log('📍 R2 key:', r2Key);
+      
+      uploadSuccess = await uploadToR2(
+        c.env.R2,
+        r2Key,
+        file
+      );
+    } else {
+      // 默认使用R2存储
+      console.log('☁️ Using default R2 storage');
+      
+      if (!c.env.R2) {
+        console.log('❌ R2 bucket not configured - c.env.R2 is undefined');
+        return c.json({ message: 'R2 bucket not configured' }, 500);
+      }
+      
+      const r2Key = `${resourceUid}/${fileName}`;
+      externalLink = `r2://${r2Key}`;
+      console.log('📍 R2 key:', r2Key);
+      
+      uploadSuccess = await uploadToR2(
+        c.env.R2,
+        r2Key,
+        file
+      );
     }
-    
-    const r2Key = `${resourceUid}/${fileName}`;
-    const externalLink = `r2://${r2Key}`;
-    console.log('📍 R2 key:', r2Key);
-    
-    const uploadSuccess = await uploadToR2(
-      c.env.R2,
-      r2Key,
-      file
-    );
 
     if (!uploadSuccess) {
       console.log('❌ Upload failed');
@@ -104,10 +201,26 @@ resourceRoutes.post('/blob', async (c) => {
 
     // 保存资源记录到数据库
     console.log('💾 Saving to database...');
-    const result = await c.env.DB.prepare(`
-      INSERT INTO resource (uid, creator_id, filename, type, size, external_link, created_ts)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).bind(resourceUid, user.sub, fileName, mimeType, file.size, externalLink, now).run();
+    
+    let result;
+    if (storageSetting.storageType === 'DATABASE') {
+      // 数据库存储：将文件内容存储为BLOB
+      // 重新获取文件内容（因为之前已经处理过了）
+      const arrayBuffer = await file.arrayBuffer();
+      const uint8Array = new Uint8Array(arrayBuffer);
+      const buffer = Buffer.from(uint8Array);
+      
+      result = await c.env.DB.prepare(`
+        INSERT INTO resource (uid, creator_id, filename, type, size, blob, external_link, created_ts)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `).bind(resourceUid, user.sub, fileName, mimeType, file.size, buffer, externalLink, now).run();
+    } else {
+      // R2存储：只存储元数据，不存储文件内容
+      result = await c.env.DB.prepare(`
+        INSERT INTO resource (uid, creator_id, filename, type, size, external_link, created_ts)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `).bind(resourceUid, user.sub, fileName, mimeType, file.size, externalLink, now).run();
+    }
 
     if (result.success) {
       console.log('✅ Resource saved to database with ID:', result.meta.last_row_id);

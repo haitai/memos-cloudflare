@@ -89,7 +89,7 @@ const StorageSection = observer(() => {
       >
         <Radio value={WorkspaceStorageSetting_StorageType.DATABASE} label={t("setting.storage-section.type-database")} />
         <Radio value={WorkspaceStorageSetting_StorageType.LOCAL} label={t("setting.storage-section.type-local")} />
-        <Radio value={WorkspaceStorageSetting_StorageType.R2} label="R2" />
+        <Radio value={WorkspaceStorageSetting_StorageType.R2} label="Cloudflare R2" />
       </RadioGroup>
       <div className="w-full flex flex-row justify-between items-center">
         <div className="flex flex-row items-center">
