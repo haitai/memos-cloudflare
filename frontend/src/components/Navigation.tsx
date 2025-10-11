@@ -66,11 +66,11 @@ const Navigation = observer((props: Props) => {
   return (
     <header
       className={cn(
-        "w-full h-full overflow-auto flex flex-col justify-between items-start gap-4 py-4 md:pt-6 z-30 hide-scrollbar",
+        "w-full h-full overflow-auto flex flex-col justify-between items-start gap-4 py-4 md:pt-6 z-30 custom-scrollbar",
         className,
       )}
     >
-      <div className="w-full px-1 py-1 flex flex-col justify-start items-start space-y-2 overflow-auto hide-scrollbar shrink">
+      <div className="w-full px-1 py-1 flex flex-col justify-start items-start space-y-2 overflow-auto custom-scrollbar shrink">
         <NavLink className="mb-2 cursor-default" to={currentUser ? Routes.ROOT : Routes.EXPLORE}>
           <BrandBanner collapsed={collapsed} />
         </NavLink>

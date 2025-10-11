@@ -7,13 +7,10 @@ import type { StatisticsData } from "@/types/statistics";
 
 export const useStatisticsData = (): StatisticsData => {
   return useMemo(() => {
-    console.log('📊 useStatisticsData - userStatsByName:', userStore.state.userStatsByName);
     const memoTypeStats = UserStats_MemoTypeStats.fromPartial({});
     const displayTimeList: Date[] = [];
 
     for (const stats of Object.values(userStore.state.userStatsByName)) {
-      console.log('📊 useStatisticsData - processing stats:', stats);
-      console.log('📊 useStatisticsData - memoDisplayTimestamps:', stats.memoDisplayTimestamps);
       displayTimeList.push(...stats.memoDisplayTimestamps);
       if (stats.memoTypeStats) {
         memoTypeStats.codeCount += stats.memoTypeStats.codeCount;
@@ -24,8 +21,6 @@ export const useStatisticsData = (): StatisticsData => {
     }
 
     const activityStats = countBy(displayTimeList.map((date) => dayjs(date).format("YYYY-MM-DD")));
-    console.log('📊 useStatisticsData - displayTimeList:', displayTimeList);
-    console.log('📊 useStatisticsData - activityStats:', activityStats);
 
     return { memoTypeStats, activityStats };
   }, [userStore.state.userStatsByName]);

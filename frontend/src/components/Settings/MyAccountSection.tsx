@@ -26,20 +26,20 @@ const MyAccountSection = () => {
         </div>
       </div>
       <div className="w-full flex flex-row justify-start items-center mt-2 space-x-2">
-        <Button variant="outlined" onClick={showUpdateAccountDialog}>
+        <Button variant="outlined" className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700" onClick={showUpdateAccountDialog}>
           <PenLineIcon className="w-4 h-4 mx-auto mr-1" />
           {t("common.edit")}
         </Button>
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outlined">
+            <Button variant="outlined" className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
               <MoreVerticalIcon className="w-4 h-4 mx-auto" />
             </Button>
           </PopoverTrigger>
           <PopoverContent align="start" className="text-sm p-1">
             <button
               onClick={() => showChangeMemberPasswordDialog(user)}
-              className="w-full flex items-center gap-2 px-2 py-1 text-left text-sm hover:bg-gray-100 rounded-md"
+              className="w-full flex items-center gap-2 px-2 py-1 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
             >
               {t("setting.account-section.change-password")}
             </button>

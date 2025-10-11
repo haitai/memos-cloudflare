@@ -112,21 +112,15 @@ export const memoServiceClient = {
   },
   createMemo: (request: { memo: any }) => apiClient.createMemo(request.memo),
   updateMemo: (request: { memo: any; updateMask: any }) => {
-    console.log('🔄 updateMemo request:', request);
-    
     if (!request.memo || !request.memo.name) {
       throw new Error('Memo name is required for update');
     }
     
     const memoName = request.memo.name;
-    console.log('📝 Memo name:', memoName);
     
     // 提取ID，添加更严格的验证
     const idString = memoName.replace('memos/', '');
     const id = parseInt(idString, 10);
-    
-    console.log('🔢 Extracted ID string:', idString);
-    console.log('🔢 Parsed ID:', id);
     
     if (isNaN(id) || id <= 0) {
       throw new Error(`Invalid memo ID: ${idString} from name: ${memoName}`);
@@ -191,13 +185,77 @@ export const resourceServiceClient = {
 
 // Shortcut Service
 export const shortcutServiceClient = {
-  listShortcuts: (request: { parent: string }) => Promise.resolve({ shortcuts: [] }),
-  createShortcut: (request: { parent: string; shortcut: any }) => Promise.resolve({
-    ...request.shortcut,
-    id: request.shortcut.id || `shortcut-${Date.now()}`,
-  }),
-  updateShortcut: (request: { parent: string; shortcut: any; updateMask?: string[] }) => Promise.resolve(request.shortcut),
-  deleteShortcut: (request: { parent: string; id: string }) => Promise.resolve({}),
+  listShortcuts: async (request: { parent: string }) => {
+    const response = await fetch('/api/shortcut', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    return await response.json();
+  },
+  
+  createShortcut: async (request: { parent: string; shortcut: any }) => {
+    const response = await fetch('/api/shortcut', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        title: request.shortcut.title,
+        payload: request.shortcut.payload,
+      }),
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    return await response.json();
+  },
+  
+  updateShortcut: async (request: { parent: string; shortcut: any }) => {
+    const response = await fetch(`/api/shortcut/${request.shortcut.id}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        title: request.shortcut.title,
+        payload: request.shortcut.payload,
+      }),
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    return await response.json();
+  },
+  
+  deleteShortcut: async (request: { parent: string; id: number }) => {
+    const response = await fetch(`/api/shortcut/${request.id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    return await response.json();
+  },
 };
 
 // Inbox Service  

@@ -154,4 +154,17 @@ CREATE TABLE workspace_setting (
     setting_data TEXT NOT NULL, -- JSON格式的设置数据
     created_ts INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
     updated_ts INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
-); 
+);
+
+-- Shortcut表
+CREATE TABLE shortcut (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    payload TEXT NOT NULL, -- JSON格式的payload数据
+    creator_id INTEGER NOT NULL,
+    created_ts INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+    updated_ts INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+    FOREIGN KEY (creator_id) REFERENCES user (id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_shortcut_creator_id ON shortcut (creator_id); 

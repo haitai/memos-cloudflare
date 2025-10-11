@@ -65,7 +65,7 @@ const MarkdownMenu = (props: Props) => {
     <Popover>
       <PopoverTrigger asChild>
         <Button variant="plain" className="p-0">
-          <SquareSlashIcon className="w-5 h-5" />
+          <SquareSlashIcon className="w-5 h-5 text-gray-600 dark:text-gray-300" />
         </Button>
       </PopoverTrigger>
       <PopoverContent align="start" className="text-sm p-1">

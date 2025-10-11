@@ -131,7 +131,7 @@ const AddMemoRelationPopover = (props: Props) => {
     <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
       <PopoverTrigger className="relative">
         <Button className="flex items-center justify-center p-0" variant="plain" asChild>
-          <LinkIcon className="w-5 h-5 mx-auto p-0" />
+          <LinkIcon className="w-5 h-5 mx-auto p-0 text-gray-600 dark:text-gray-300" />
         </Button>
       </PopoverTrigger>
       <PopoverContent align="center">

@@ -22,9 +22,6 @@ const TagsSection = observer((props: Props) => {
   const tags = Object.entries(userStore.state.tagCount)
     .sort((a, b) => a[0].localeCompare(b[0]))
     .sort((a, b) => b[1] - a[1]);
-	console.log("🏷️ TagsSection - userStore.state.tagCount:", userStore.state.tagCount);
-	console.log("🏷️ TagsSection - userStore.state.userStatsByName:", userStore.state.userStatsByName);
-	console.log("🏷️ TagsSection - processed tags:", tags);
 
   const handleTagClick = (tag: string) => {
     const isActive = memoFilterStore.getFiltersByFactor("tagSearch").some((filter: MemoFilter) => filter.value === tag);
@@ -50,7 +47,7 @@ const TagsSection = observer((props: Props) => {
   };
 
   return (
-    <div className="flex flex-col justify-start items-start w-full mt-3 px-1 h-auto shrink-0 flex-nowrap hide-scrollbar">
+    <div className="flex flex-col justify-start items-start w-full mt-3 px-1 h-auto shrink-0 flex-nowrap custom-scrollbar">
       <div className="flex flex-row justify-between items-center w-full gap-1 mb-1 text-sm leading-6 text-gray-400 select-none">
         <span>{t("common.tags")}</span>
         {tags.length > 0 && (

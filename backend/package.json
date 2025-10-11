@@ -5,11 +5,15 @@
   "main": "src/index.ts",
   "scripts": {
     "dev": "wrangler dev",
+    "dev:drizzle": "wrangler dev src/index-drizzle.ts",
     "deploy": "wrangler deploy",
     "deploy:staging": "wrangler deploy --env staging",
     "deploy:production": "wrangler deploy --env production",
     "db:init": "wrangler d1 execute memos --file=./schema.sql",
     "db:seed": "wrangler d1 execute memos --file=./seed.sql",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio",
     "test": "vitest",
     "type-check": "tsc --noEmit"
   },
@@ -22,6 +26,8 @@
     "wrangler": "^3.60.0"
   },
   "dependencies": {
+    "drizzle-kit": "^0.31.5",
+    "drizzle-orm": "^0.44.6",
     "hono": "^4.4.0",
     "uuid": "^9.0.1"
   }

@@ -73,7 +73,7 @@ const UploadResourceButton = observer((props: Props) => {
 
   return (
     <Button className="relative p-0" variant="plain" disabled={isUploading}>
-      {isUploading ? <LoaderIcon className="w-5 h-5 animate-spin" /> : <PaperclipIcon className="w-5 h-5" />}
+      {isUploading ? <LoaderIcon className="w-5 h-5 animate-spin text-gray-600 dark:text-gray-300" /> : <PaperclipIcon className="w-5 h-5 text-gray-600 dark:text-gray-300" />}
       <input
         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
         ref={fileInputRef}

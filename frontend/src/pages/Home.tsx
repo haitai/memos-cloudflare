@@ -17,13 +17,11 @@ const Home = observer(() => {
     const conditions = [];
     const contentSearch: string[] = [];
     const tagSearch: string[] = [];
-    console.log('🏷️ Frontend - Current filters:', memoFilterStore.filters);
     for (const filter of memoFilterStore.filters) {
       if (filter.factor === "contentSearch") {
         contentSearch.push(`"${filter.value}"`);
       } else if (filter.factor === "tagSearch") {
         tagSearch.push(`"${filter.value}"`);
-        console.log('🏷️ Frontend - Added tag to search:', filter.value);
       } else if (filter.factor === "pinned") {
         conditions.push(`pinned == true`);
       } else if (filter.factor === "property.hasLink") {
@@ -45,10 +43,8 @@ const Home = observer(() => {
     }
     if (tagSearch.length > 0) {
       conditions.push(`tag_search == [${tagSearch.join(", ")}]`);
-      console.log('🏷️ Frontend - Tag search condition:', `tag_search == [${tagSearch.join(", ")}]`);
     }
     const finalFilter = conditions.join(" && ");
-    console.log('🏷️ Frontend - Final filter:', finalFilter);
     return finalFilter;
   }, [user, memoFilterStore.filters, viewStore.state.orderByTimeAsc]);
 
@@ -67,8 +63,24 @@ const Home = observer(() => {
       }
       {...(user ? { owner: user.name } : {})}
       direction={viewStore.state.orderByTimeAsc ? Direction.ASC : Direction.DESC}
-      filter={selectedShortcut?.filter || ""}
-      oldFilter={memoListFilter}
+      filter={(() => {
+        if (selectedShortcut?.filter && memoListFilter) {
+          return `${selectedShortcut.filter} && ${memoListFilter}`;
+        } else if (selectedShortcut?.filter) {
+          return selectedShortcut.filter;
+        } else {
+          return memoListFilter;
+        }
+      })()}
+      oldFilter={(() => {
+        if (selectedShortcut?.filter && memoListFilter) {
+          return `${selectedShortcut.filter} && ${memoListFilter}`;
+        } else if (selectedShortcut?.filter) {
+          return selectedShortcut.filter;
+        } else {
+          return memoListFilter;
+        }
+      })()}
     />
   );
 });

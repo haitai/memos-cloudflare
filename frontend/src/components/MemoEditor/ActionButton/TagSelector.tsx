@@ -44,7 +44,7 @@ const TagSelector = observer((props: Props) => {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="plain" className="p-0">
-          <HashIcon className="w-5 h-5" />
+          <HashIcon className="w-5 h-5 text-gray-600 dark:text-gray-300" />
         </Button>
       </PopoverTrigger>
       <PopoverContent align="start" sideOffset={2}>

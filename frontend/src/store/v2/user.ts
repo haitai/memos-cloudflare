@@ -20,14 +20,11 @@ class LocalState {
 
   get tagCount() {
     const tagCount: Record<string, number> = {};
-    console.log('🏷️ userStore.tagCount - userStatsByName:', this.userStatsByName);
     for (const stats of Object.values(this.userStatsByName)) {
-      console.log('🏷️ userStore.tagCount - processing stats:', stats);
       for (const tag of Object.keys(stats.tagCount)) {
         tagCount[tag] = (tagCount[tag] || 0) + stats.tagCount[tag];
       }
     }
-    console.log('🏷️ userStore.tagCount - final result:', tagCount);
     return tagCount;
   }
 
@@ -125,17 +122,11 @@ const userStore = (() => {
   };
 
   const updateUserSetting = async (userSetting: Partial<UserSetting>, updateMask: string[]) => {
-    console.log("🔧 updateUserSetting called - v2025-07-11-13:17:00");
-    console.log("📤 Sending user setting:", JSON.stringify(userSetting, null, 2));
-    console.log("📝 Update mask:", updateMask);
-    
     try {
       const updatedUserSetting = await userServiceClient.updateUserSetting({
         setting: userSetting,
         updateMask: updateMask,
       });
-      
-      console.log("✅ User setting updated successfully:", updatedUserSetting);
       state.setPartial({
         userSetting: UserSetting.fromPartial({
           ...state.userSetting,
@@ -183,22 +174,16 @@ const userStore = (() => {
   };
 
   const fetchUserStats = async (user?: string) => {
-    console.log('🔄 fetchUserStats called with user:', user);
     const userStatsByName: Record<string, UserStats> = {};
     if (!user) {
-      console.log('📊 Fetching all user stats...');
       const { userStats } = await userServiceClient.listAllUserStats({});
-      console.log('📊 All user stats received:', userStats);
       for (const stats of userStats) {
         userStatsByName[stats.name] = stats;
       }
     } else {
-      console.log('📊 Fetching stats for user:', user);
       const userStats = await userServiceClient.getUserStats({ name: user });
-      console.log('📊 User stats received:', userStats);
       userStatsByName[user] = userStats;
     }
-    console.log('📊 Setting userStatsByName:', userStatsByName);
     state.setPartial({
       userStatsByName: {
         ...state.userStatsByName,

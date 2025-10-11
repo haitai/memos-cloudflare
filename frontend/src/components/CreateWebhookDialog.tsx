@@ -98,7 +98,7 @@ const CreateWebhookDialog: React.FC<Props> = (props: Props) => {
         <p className="title-text">
           {isCreating ? t("setting.webhook-section.create-dialog.create-webhook") : t("setting.webhook-section.create-dialog.edit-webhook")}
         </p>
-        <Button variant="plain" onClick={() => destroy()}>
+        <Button variant="plain" className="text-gray-700 dark:text-gray-300" onClick={() => destroy()}>
           <XIcon className="w-5 h-auto" />
         </Button>
       </div>
@@ -132,7 +132,7 @@ const CreateWebhookDialog: React.FC<Props> = (props: Props) => {
           </div>
         </div>
         <div className="w-full flex flex-row justify-end items-center mt-2 space-x-2">
-          <Button variant="plain" disabled={requestState.isLoading} onClick={destroy}>
+          <Button variant="plain" className="text-gray-700 dark:text-gray-300" disabled={requestState.isLoading} onClick={destroy}>
             {t("common.cancel")}
           </Button>
           <Button color="primary" disabled={requestState.isLoading} onClick={handleSaveBtnClick}>

@@ -81,7 +81,7 @@ const UserProfile = observer(() => {
           (user ? (
             <>
               <div className="my-4 w-full flex justify-end items-center gap-2">
-                <Button variant="outlined" onClick={handleCopyProfileLink}>
+                <Button variant="outlined" className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700" onClick={handleCopyProfileLink}>
                   {t("common.share")}
                   <ExternalLinkIcon className="ml-1 w-4 h-auto opacity-60" />
                 </Button>

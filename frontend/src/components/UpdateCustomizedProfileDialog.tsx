@@ -99,29 +99,29 @@ const UpdateCustomizedProfileDialog = ({ destroy }: Props) => {
     <div className="max-w-full shadow flex flex-col justify-start items-start bg-white dark:bg-zinc-800 dark:text-gray-300 p-4 rounded-lg">
       <div className="flex flex-row justify-between items-center mb-4 gap-2 w-full">
         <p className="title-text">{t("setting.system-section.customize-server.title")}</p>
-        <Button variant="plain" onClick={handleCloseButtonClick}>
+        <Button variant="plain" className="text-gray-700 dark:text-gray-300" onClick={handleCloseButtonClick}>
           <XIcon className="w-5 h-auto" />
         </Button>
       </div>
       <div className="flex flex-col justify-start items-start min-w-[16rem]">
         <p className="text-sm mb-1">{t("setting.system-section.server-name")}</p>
-        <Input className="w-full" type="text" value={customProfile.title} onChange={handleNameChanged} />
+        <Input className="w-full bg-white dark:bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:bg-white dark:focus:bg-transparent border border-gray-300 dark:border-gray-600" type="text" placeholder="请输入服务器名称" value={customProfile.title} onChange={handleNameChanged} />
         <p className="text-sm mb-1 mt-2">{t("setting.system-section.customize-server.icon-url")}</p>
-        <Input className="w-full" type="text" value={customProfile.logoUrl} onChange={handleLogoUrlChanged} />
+        <Input className="w-full bg-white dark:bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:bg-white dark:focus:bg-transparent border border-gray-300 dark:border-gray-600" type="text" placeholder="请输入图标URL地址" value={customProfile.logoUrl} onChange={handleLogoUrlChanged} />
         <p className="text-sm mb-1 mt-2">{t("setting.system-section.customize-server.description")}</p>
-        <Textarea rows={3} fullWidth value={customProfile.description} onChange={handleDescriptionChanged} />
+        <Textarea rows={3} fullWidth className="bg-white dark:bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:bg-white dark:focus:bg-transparent border border-gray-300 dark:border-gray-600" placeholder="请输入服务器描述" value={customProfile.description} onChange={handleDescriptionChanged} />
         <p className="text-sm mb-1 mt-2">{t("setting.system-section.customize-server.locale")}</p>
         <LocaleSelect className="w-full!" value={customProfile.locale} onChange={handleLocaleSelectChange} />
         <p className="text-sm mb-1 mt-2">{t("setting.system-section.customize-server.appearance")}</p>
         <AppearanceSelect className="w-full!" value={customProfile.appearance as Appearance} onChange={handleAppearanceSelectChange} />
         <div className="mt-4 w-full flex flex-row justify-between items-center space-x-2">
           <div className="flex flex-row justify-start items-center">
-            <Button variant="outlined" onClick={handleRestoreButtonClick}>
+            <Button variant="outlined" className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700" onClick={handleRestoreButtonClick}>
               {t("common.restore")}
             </Button>
           </div>
           <div className="flex flex-row justify-end items-center gap-2">
-            <Button variant="plain" onClick={handleCloseButtonClick}>
+            <Button variant="plain" className="text-gray-700 dark:text-gray-300" onClick={handleCloseButtonClick}>
               {t("common.cancel")}
             </Button>
             <Button color="primary" onClick={handleSaveButtonClick}>

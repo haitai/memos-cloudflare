@@ -419,8 +419,15 @@ class ApiClient {
 		params.rowStatus = 'ARCHIVED';
 	}
 
-    const searchParams = new URLSearchParams(params);
-    const memos = await this.request<any[]>(`/api/memo?${searchParams}`);
+    // 自定义URL编码，将空格编码为+而不是%20
+    const searchParams = new URLSearchParams();
+    for (const [key, value] of Object.entries(params)) {
+      if (value !== undefined && value !== null) {
+        searchParams.append(key, String(value));
+      }
+    }
+    const queryString = searchParams.toString().replace(/%20/g, '+');
+    const memos = await this.request<any[]>(`/api/memo?${queryString}`);
 
     
     // 转换为前端期望的protobuf格式

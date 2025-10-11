@@ -71,7 +71,7 @@ const WorkspaceSection = observer(() => {
           {t("setting.system-section.server-name")}:{" "}
           <span className="font-mono font-bold">{workspaceGeneralSetting.customProfile?.title || "Memos"}</span>
         </div>
-        <Button variant="outlined" onClick={handleUpdateCustomizedProfileButtonClick}>
+        <Button variant="outlined" className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700" onClick={handleUpdateCustomizedProfileButtonClick}>
           {t("common.edit")}
         </Button>
       </div>

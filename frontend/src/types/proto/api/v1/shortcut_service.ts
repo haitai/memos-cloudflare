@@ -14,7 +14,10 @@ export const protobufPackage = "memos.api.v1";
 export interface Shortcut {
   id: string;
   title: string;
-  filter: string;
+  filter?: string;
+  payload?: {
+    filter: string;
+  };
 }
 
 export interface ListShortcutsRequest {

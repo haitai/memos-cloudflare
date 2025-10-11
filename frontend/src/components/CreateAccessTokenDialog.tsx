@@ -87,7 +87,7 @@ const CreateAccessTokenDialog: React.FC<Props> = (props: Props) => {
     <div className="max-w-full shadow flex flex-col justify-start items-start bg-white dark:bg-zinc-800 dark:text-gray-300 p-4 rounded-lg">
       <div className="flex flex-row justify-between items-center w-full mb-4 gap-2">
         <p>{t("setting.access-token-section.create-dialog.create-access-token")}</p>
-        <Button variant="plain" onClick={() => destroy()}>
+        <Button variant="plain" className="text-gray-700 dark:text-gray-300" onClick={() => destroy()}>
           <XIcon className="w-5 h-auto" />
         </Button>
       </div>
@@ -119,7 +119,7 @@ const CreateAccessTokenDialog: React.FC<Props> = (props: Props) => {
           </div>
         </div>
         <div className="w-full flex flex-row justify-end items-center mt-4 space-x-2">
-          <Button variant="plain" disabled={requestState.isLoading} onClick={destroy}>
+          <Button variant="plain" className="text-gray-700 dark:text-gray-300" disabled={requestState.isLoading} onClick={destroy}>
             {t("common.cancel")}
           </Button>
           <Button color="primary" disabled={requestState.isLoading} onClick={handleSaveBtnClick}>

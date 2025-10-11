@@ -1,5 +1,5 @@
 import { Tooltip } from "@mui/joy";
-import { Edit3Icon, MoreVerticalIcon, TrashIcon, PlusIcon } from "lucide-react";
+import { Edit3Icon, MoreVerticalIcon, TrashIcon, PlusIcon, StarIcon, StarOffIcon } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { shortcutServiceClient } from "@/grpcweb";
 import useAsyncEffect from "@/hooks/useAsyncEffect";
@@ -26,13 +26,13 @@ const ShortcutsSection = observer(() => {
   const handleDeleteShortcut = async (shortcut: Shortcut) => {
     const confirmed = window.confirm("Are you sure you want to delete this shortcut?");
     if (confirmed) {
-      await shortcutServiceClient.deleteShortcut({ parent: user.name, id: shortcut.id });
+      await shortcutServiceClient.deleteShortcut({ parent: user.name, id: parseInt(shortcut.id) });
       await userStore.fetchShortcuts();
     }
   };
 
   return (
-    <div className="w-full flex flex-col justify-start items-start mt-3 px-1 h-auto shrink-0 flex-nowrap hide-scrollbar">
+    <div className="w-full flex flex-col justify-start items-start mt-3 px-1 h-auto shrink-0 flex-nowrap custom-scrollbar">
       <div className="flex flex-row justify-between items-center w-full gap-1 mb-1 text-sm leading-6 text-gray-400 select-none">
         <span>{t("common.shortcuts")}</span>
         <Tooltip title={t("common.create")} placement="top">

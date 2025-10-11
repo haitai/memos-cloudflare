@@ -173,6 +173,7 @@ memoRoutes.get('/', async (c) => {
     const visibility = url.searchParams.get('visibility');
     const limit = parseInt(url.searchParams.get('limit') || '50');
     const offset = parseInt(url.searchParams.get('offset') || '0');
+	const filter = url.searchParams.get('filter'); // 新的filter参数
 	const oldFilter = url.searchParams.get('oldFilter'); // 例如：content_search == ["hello"] && tag_search == ["tag1"]
 
     let whereClause = 'WHERE m.row_status = ? AND m.id NOT IN (SELECT memo_id FROM memo_relation WHERE type = ?)';
@@ -189,11 +190,13 @@ memoRoutes.get('/', async (c) => {
       whereClause += ' AND m.creator_id = ?';
       params.push(parentUserId);
     }
-	// 处理内容搜索
-	if (oldFilter) {
-	  console.log('🔍 Backend - Processing oldFilter:', oldFilter);
+	// 处理筛选条件 - 同时处理filter和oldFilter参数
+	const processFilter = (filterString: string) => {
+	  if (!filterString) return;
+	  
+	  console.log('🔍 Backend - Processing filter:', filterString);
 	  // 匹配 content_search == ["xxx"]
-	  const contentSearchMatch = oldFilter.match(/content_search == \[([^\]]+)\]/);
+	  const contentSearchMatch = filterString.match(/content_search == \[([^\]]+)\]/);
 	  if (contentSearchMatch) {
 		// 提取内容关键词数组
 		const words = JSON.parse(`[${contentSearchMatch[1]}]`);
@@ -204,7 +207,7 @@ memoRoutes.get('/', async (c) => {
 		});
 	  }
 	  // 处理标签搜索
-	  const tag_search = oldFilter.match(/tag_search == \[([^\]]+)\]/);
+	  const tag_search = filterString.match(/tag_search == \[([^\]]+)\]/);
 	  if (tag_search) {
 		// 提取标签名称数组
 		const tags = JSON.parse(`[${tag_search[1]}]`);
@@ -222,34 +225,34 @@ memoRoutes.get('/', async (c) => {
 		});
 	  }
 	  // 处理属性筛选器
-	  const hasTaskListMatch = oldFilter.match(/has_task_list == true/);
+	  const hasTaskListMatch = filterString.match(/has_task_list == true/);
 	  if (hasTaskListMatch) {
 		console.log('📋 Backend - Processing hasTaskList filter');
 		whereClause += ` AND m.content LIKE '%- [%]%'`;
 	  }
 	  
-	  const hasLinkMatch = oldFilter.match(/has_link == true/);
+	  const hasLinkMatch = filterString.match(/has_link == true/);
 	  if (hasLinkMatch) {
 		console.log('🔗 Backend - Processing hasLink filter');
 		whereClause += ` AND m.content LIKE '%http%'`;
 	  }
 	  
-	  const hasCodeMatch = oldFilter.match(/has_code == true/);
+	  const hasCodeMatch = filterString.match(/has_code == true/);
 	  if (hasCodeMatch) {
 		console.log('💻 Backend - Processing hasCode filter');
 		whereClause += " AND (m.content LIKE '%```%' OR m.content LIKE '%`%')";
 	  }
 	  
 	  // 处理置顶筛选器
-	  const pinnedMatch = oldFilter.match(/pinned == true/);
+	  const pinnedMatch = filterString.match(/pinned == true/);
 	  if (pinnedMatch) {
 		console.log('📌 Backend - Processing pinned filter');
 		whereClause += ' AND m.pinned = 1';
 	  }
 	  
 	  // 处理displayTime时间范围筛选器
-	  const displayTimeAfterMatch = oldFilter.match(/display_time_after == (\d+)/);
-	  const displayTimeBeforeMatch = oldFilter.match(/display_time_before == (\d+)/);
+	  const displayTimeAfterMatch = filterString.match(/display_time_after == (\d+)/);
+	  const displayTimeBeforeMatch = filterString.match(/display_time_before == (\d+)/);
 	  if (displayTimeAfterMatch) {
 		const timestamp = parseInt(displayTimeAfterMatch[1]);
 		console.log('📅 Backend - Processing displayTimeAfter filter:', timestamp);
@@ -262,7 +265,12 @@ memoRoutes.get('/', async (c) => {
 		whereClause += ' AND m.created_ts < ?';
 		params.push(timestamp);
 	  }
-	}
+	};
+	
+	// 调用筛选处理函数
+	processFilter(filter);
+	processFilter(oldFilter);
+	
     if (visibility) {
       whereClause += ' AND m.visibility = ?';
       params.push(visibility);

@@ -69,7 +69,7 @@ const ChangeMemberPasswordDialog: React.FC<Props> = (props: Props) => {
         <p>
           {t("setting.account-section.change-password")} ({user.nickname})
         </p>
-        <Button variant="plain" onClick={handleCloseBtnClick}>
+        <Button variant="plain" className="text-gray-700 dark:text-gray-300" onClick={handleCloseBtnClick}>
           <XIcon className="w-5 h-auto" />
         </Button>
       </div>
@@ -91,7 +91,7 @@ const ChangeMemberPasswordDialog: React.FC<Props> = (props: Props) => {
           onChange={handleNewPasswordAgainChanged}
         />
         <div className="flex flex-row justify-end items-center mt-4 w-full gap-x-2">
-          <Button variant="plain" onClick={handleCloseBtnClick}>
+          <Button variant="plain" className="text-gray-700 dark:text-gray-300" onClick={handleCloseBtnClick}>
             {t("common.cancel")}
           </Button>
           <Button color="primary" onClick={handleSaveBtnClick}>

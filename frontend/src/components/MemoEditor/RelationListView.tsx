@@ -18,13 +18,10 @@ const RelationListView = observer((props: Props) => {
       const requests = relationList
         .filter((relation) => relation.type === MemoRelation_Type.REFERENCE)
         .map(async (relation) => {
-          console.log('🔗 Fetching memo for relation:', relation.relatedMemo?.name);
           const memo = await memoStore.getOrFetchMemoByName(relation.relatedMemo!.name, { skipStore: true });
-          console.log('🔗 Fetched memo:', memo);
           return memo;
         });
       const list = await Promise.all(requests);
-      console.log('🔗 Final referencing memo list:', list);
       setReferencingMemoList(list);
     })();
   }, [relationList]);

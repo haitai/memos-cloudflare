@@ -21,11 +21,7 @@ const WebhookSection = () => {
   const [webhooks, setWebhooks] = useState<Webhook[]>([]);
 
   useEffect(() => {
-    console.log("🔧 WebhookSection loaded - v2025-07-11-13:12:00 - FIXED VERSION");
-    console.log("🔍 About to call listWebhooks for user:", currentUser.name);
-    
     listWebhooks(currentUser.name).then((webhooks) => {
-      console.log("✅ Webhooks loaded successfully:", webhooks);
       setWebhooks(webhooks);
     }).catch((error) => {
       console.error("❌ Failed to load webhooks:", error);

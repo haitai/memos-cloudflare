@@ -501,7 +501,7 @@ const MemoEditor = observer((props: Props) => {
         <ResourceListView resourceList={state.resourceList} setResourceList={handleSetResourceList} />
         <RelationListView relationList={referenceRelations} setRelationList={handleSetRelationList} />
         <div className="relative w-full flex flex-row justify-between items-center py-1" onFocus={(e) => e.stopPropagation()}>
-          <div className="flex flex-row justify-start items-center opacity-80 dark:opacity-60 space-x-2">
+          <div className="flex flex-row justify-start items-center opacity-80 dark:opacity-80 space-x-2">
             <TagSelector editorRef={editorRef} />
             <MarkdownMenu editorRef={editorRef} />
             <UploadResourceButton isUploadingResource={state.isUploadingResource} />
@@ -518,7 +518,7 @@ const MemoEditor = observer((props: Props) => {
           </div>
           <div className="shrink-0 -mr-1 flex flex-row justify-end items-center">
             {props.onCancel && (
-              <Button variant="plain" className="opacity-60" disabled={state.isRequesting} onClick={handleCancelBtnClick}>
+              <Button variant="plain" className="opacity-60 text-gray-700 dark:text-gray-300" disabled={state.isRequesting} onClick={handleCancelBtnClick}>
                 {t("common.cancel")}
               </Button>
             )}

@@ -6,7 +6,7 @@ compatibility_flags = ["nodejs_compat"]
 
 [vars]
 LOG_LEVEL = "info"
-BASE_URL = "https://memos.example.com"
+BASE_URL = "https://YOUR-CLOUDFLARE.workers.dev"
 
 # Secrets - set via wrangler secret put
 # JWT_SECRET
@@ -19,6 +19,11 @@ BASE_URL = "https://memos.example.com"
 binding = "DB"
 database_name = "memos"
 database_id = "YOUR_D1_DATABASE_ID"  # 替换为您的实际数据库ID
+
+# R2 bucket for file storage
+[[r2_buckets]]
+binding = "R2"
+bucket_name = "memos-resources"
 
 [env.staging]
 name = "memos-cloudflare-staging"

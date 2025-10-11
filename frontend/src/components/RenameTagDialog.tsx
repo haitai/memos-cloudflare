@@ -50,7 +50,7 @@ const RenameTagDialog: React.FC<Props> = (props: Props) => {
     <div className="max-w-full shadow flex flex-col justify-start items-start bg-white dark:bg-zinc-800 dark:text-gray-300 p-4 rounded-lg">
       <div className="flex flex-row justify-between items-center mb-4 gap-2 w-full">
         <p className="title-text">{t("tag.rename-tag")}</p>
-        <Button variant="plain" onClick={() => destroy()}>
+        <Button variant="plain" className="text-gray-700 dark:text-gray-300" onClick={() => destroy()}>
           <XIcon className="w-5 h-auto" />
         </Button>
       </div>
@@ -58,11 +58,11 @@ const RenameTagDialog: React.FC<Props> = (props: Props) => {
         <div className="w-full flex flex-col justify-start items-start mb-3">
           <div className="relative w-full mb-2 flex flex-row justify-start items-center space-x-2">
             <span className="w-20 text-sm whitespace-nowrap shrink-0 text-right">{t("tag.old-name")}</span>
-            <Input className="w-full" readOnly disabled type="text" placeholder="A new tag name" value={tag} />
+            <Input className="w-full bg-white dark:bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:bg-white dark:focus:bg-transparent border border-gray-300 dark:border-gray-600" readOnly disabled type="text" placeholder="旧标签名称" value={tag} />
           </div>
           <div className="relative w-full mb-2 flex flex-row justify-start items-center space-x-2">
             <span className="w-20 text-sm whitespace-nowrap shrink-0 text-right">{t("tag.new-name")}</span>
-            <Input className="w-full" type="text" placeholder="A new tag name" value={newName} onChange={handleTagNameInputChange} />
+            <Input className="w-full bg-white dark:bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:bg-white dark:focus:bg-transparent border border-gray-300 dark:border-gray-600" type="text" placeholder="请输入新标签名称" value={newName} onChange={handleTagNameInputChange} />
           </div>
           <List size="sm" marker="disc">
             <ListItem>
@@ -71,7 +71,7 @@ const RenameTagDialog: React.FC<Props> = (props: Props) => {
           </List>
         </div>
         <div className="w-full flex flex-row justify-end items-center space-x-2">
-          <Button variant="plain" disabled={requestState.isLoading} onClick={destroy}>
+          <Button variant="plain" className="text-gray-700 dark:text-gray-300" disabled={requestState.isLoading} onClick={destroy}>
             {t("common.cancel")}
           </Button>
           <Button color="primary" disabled={requestState.isLoading} onClick={handleConfirm}>

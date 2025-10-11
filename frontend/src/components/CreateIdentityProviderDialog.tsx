@@ -245,7 +245,7 @@ const CreateIdentityProviderDialog: React.FC<Props> = (props: Props) => {
     <div className="max-w-full shadow flex flex-col justify-start items-start bg-white dark:bg-zinc-800 dark:text-gray-300 p-4 rounded-lg">
       <div className="flex flex-row justify-between items-center mb-4 gap-2 w-full">
         <p>{t(isCreating ? "setting.sso-section.create-sso" : "setting.sso-section.update-sso")}</p>
-        <Button variant="plain" onClick={handleCloseBtnClick}>
+        <Button variant="plain" className="text-gray-700 dark:text-gray-300" onClick={handleCloseBtnClick}>
           <XIcon className="w-5 h-auto" />
         </Button>
       </div>
@@ -433,7 +433,7 @@ const CreateIdentityProviderDialog: React.FC<Props> = (props: Props) => {
           </>
         )}
         <div className="mt-2 w-full flex flex-row justify-end items-center space-x-1">
-          <Button variant="plain" onClick={handleCloseBtnClick}>
+          <Button variant="plain" className="text-gray-700 dark:text-gray-300" onClick={handleCloseBtnClick}>
             {t("common.cancel")}
           </Button>
           <Button color="primary" onClick={handleConfirmBtnClick} disabled={!allowConfirmAction()}>

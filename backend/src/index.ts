@@ -10,6 +10,7 @@ import { tagRoutes } from './routes/tag';
 import { resourceRoutes } from './routes/resource';
 import { workspaceRoutes } from './routes/workspace';
 import { webhookRoutes } from './routes/webhook';
+import { shortcutRoutes } from './routes/shortcut-simple';
 import { authMiddleware } from './middleware/auth';
 
 // 导入环境类型
@@ -76,6 +77,7 @@ app.use('/api/user/*', authMiddleware);
 app.use('/api/tag/*', authMiddleware);
 app.use('/api/resource/*', authMiddleware);
 app.use('/api/webhook/*', authMiddleware);
+app.use('/api/shortcut/*', authMiddleware);
 
 // memo 路由需要部分认证 - 只有非GET请求需要认证
 app.post('/api/memo/*', authMiddleware);
@@ -87,6 +89,7 @@ app.route('/api/memo', memoRoutes);
 app.route('/api/tag', tagRoutes);
 app.route('/api/resource', resourceRoutes);
 app.route('/api/webhook', webhookRoutes);
+app.route('/api/shortcut', shortcutRoutes);
 
 // 文件下载路由 (不在 /api 下)
 app.get('/o/r/:uid/:filename', async (c) => {

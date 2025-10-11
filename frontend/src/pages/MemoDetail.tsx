@@ -123,8 +123,8 @@ const MemoDetail = observer(() => {
                 showCreateCommentButton && (
                   <div className="w-full flex flex-row justify-center items-center py-6">
                     <Button variant="plain" color="primary" onClick={handleShowCommentEditor}>
-                      <span className="text-gray-500">{t("memo.comment.write-a-comment")}</span>
-                      <MessageCircleIcon className="ml-2 w-5 h-auto text-gray-500" />
+                      <span className="text-gray-500 dark:text-gray-400">{t("memo.comment.write-a-comment")}</span>
+                      <MessageCircleIcon className="ml-2 w-5 h-auto text-gray-500 dark:text-gray-400" />
                     </Button>
                   </div>
                 )
@@ -137,7 +137,7 @@ const MemoDetail = observer(() => {
                       <span className="text-gray-400 text-sm ml-1">({comments.length})</span>
                     </div>
                     {showCreateCommentButton && (
-                      <Button variant="plain" color="primary" className="text-gray-500" onClick={handleShowCommentEditor}>
+                      <Button variant="plain" color="primary" className="text-gray-500 dark:text-gray-400" onClick={handleShowCommentEditor}>
                         {t("memo.comment.write-a-comment")}
                       </Button>
                     )}
