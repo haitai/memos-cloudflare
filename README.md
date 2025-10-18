@@ -2,6 +2,16 @@
 
 基于 [Memos](https://github.com/usememos/memos) 的 Cloudflare 部署方案，使用 Cloudflare Workers + D1 + R2 技术栈。
 
+## 📖 关于项目来源
+
+本项目基于 [Allhuo/memos-cloudflare](https://github.com/Allhuo/memos-cloudflare) 的版本进行开发，其又是基于 [vividmuse/memos-cloudflare](https://github.com/vividmuse/memos-cloudflare) 的早期版本进行开发。
+
+原项目经测试，存在大量bug和功能缺失，在cursor帮助下，修复了已发现的bug，修补了官方memos提供的一些功能，尽量和memos原有功能对齐。
+
+**本人不懂编程，在使用本程序过程中发现的问题请自行解决。**
+
+原作者 [Allhuo](https://github.com/Allhuo) 和 [@vividmuse](https://github.com/vividmuse) ，一并致谢。
+
 ## ✨ 特性
 
 - 🚀 **无服务器架构**: Cloudflare Workers 全球边缘部署
@@ -189,12 +199,6 @@ pnpm dev
 - `GET /api/workspace/profile` - 获取工作区配置
 - `GET /api/workspace/setting` - 获取设置
 
-## 🤝 贡献
-
-1. Fork 项目
-2. 创建功能分支
-3. 提交更改
-4. 发起 Pull Request
 
 ## 📄 许可证
 
@@ -207,12 +211,3 @@ pnpm dev
 - [Cloudflare D1 文档](https://developers.cloudflare.com/d1/)
 - [Cloudflare Pages 文档](https://developers.cloudflare.com/pages/) 
 
-## 📖 关于项目来源
-
-本项目基于 [Allhuo/memos-cloudflare](https://github.com/Allhuo/memos-cloudflare) 的版本进行开发，其又是基于 [vividmuse/memos-cloudflare](https://github.com/vividmuse/memos-cloudflare) 的早期版本进行开发。
-
-原项目经测试，存在大量bug和功能缺失，在cursor帮助下，修复了已发现的bug，修补了官方memos提供的一些功能，尽量和memos原有功能对齐。
-
-**本人不懂编程，在使用本程序过程中发现的问题请自行解决。**
-
-原作者 [Allhuo](https://github.com/Allhuo) 和 [@vividmuse](https://github.com/vividmuse) ，一并致谢。
