@@ -1,8 +1,21 @@
-import { DivIcon, LatLng } from "leaflet";
+// Kept here rather than in main.tsx so the stylesheet ships with this lazily
+// loaded chunk instead of blocking every page view.
+import "leaflet/dist/leaflet.css";
+import { DivIcon } from "leaflet";
 import { MapPinIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import ReactDOMServer from "react-dom/server";
 import { MapContainer, Marker, TileLayer, useMapEvents } from "react-leaflet";
+
+/**
+ * A plain coordinate pair. The component intentionally avoids exporting a
+ * Leaflet `LatLng` so that consumers can render it lazily without pulling the
+ * whole leaflet runtime into the initial bundle.
+ */
+export interface LatLngLike {
+  lat: number;
+  lng: number;
+}
 
 const markerIcon = new DivIcon({
   className: "relative border-none",
@@ -10,8 +23,8 @@ const markerIcon = new DivIcon({
 });
 
 interface MarkerProps {
-  position: LatLng | undefined;
-  onChange: (position: LatLng) => void;
+  position: LatLngLike | undefined;
+  onChange: (position: LatLngLike) => void;
   readonly?: boolean;
 }
 
@@ -24,10 +37,11 @@ const LocationMarker = (props: MarkerProps) => {
         return;
       }
 
-      setPosition(e.latlng);
+      const next = { lat: e.latlng.lat, lng: e.latlng.lng };
+      setPosition(next);
       map.locate();
       // Call the parent onChange function.
-      props.onChange(e.latlng);
+      props.onChange(next);
     },
     locationfound() {},
   });
@@ -42,11 +56,11 @@ const LocationMarker = (props: MarkerProps) => {
 
 interface MapProps {
   readonly?: boolean;
-  latlng?: LatLng;
-  onChange?: (position: LatLng) => void;
+  latlng?: LatLngLike;
+  onChange?: (position: LatLngLike) => void;
 }
 
-const DEFAULT_CENTER_LAT_LNG = new LatLng(48.8584, 2.2945);
+const DEFAULT_CENTER_LAT_LNG: LatLngLike = { lat: 48.8584, lng: 2.2945 };
 
 const LeafletMap = (props: MapProps) => {
   const position = props.latlng || DEFAULT_CENTER_LAT_LNG;

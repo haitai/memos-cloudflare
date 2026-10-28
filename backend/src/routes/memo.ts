@@ -293,9 +293,6 @@ memoRoutes.get('/', async (c) => {
 
     params.push(limit.toString(), offset.toString());
 
-    console.log('🔍 Backend - Final query params:', params);
-    console.log('🔍 Backend - Final whereClause:', whereClause);
-
     const memos = await c.env.DB.prepare(`
       SELECT m.*, u.username as creator_username
       FROM memo m
@@ -305,14 +302,10 @@ memoRoutes.get('/', async (c) => {
       LIMIT ? OFFSET ?
     `).bind(...params).all();
 
-    console.log('🔍 Backend - Query results:', memos.results?.length || 0, 'memos found');
-
-    // 为每个笔记获取详细信息
-    const memosWithDetails = [];
-    for (const memo of memos.results || []) {
-      const memoWithDetails = await getMemoWithDetails(c.env.DB, memo.id as number);
-      memosWithDetails.push(memoWithDetails);
-    }
+    // 一次性批量补齐所有关联数据，避免逐条查询的 N+1 问题
+    // 之前：1 + N*6 次 D1 往返（N=16 时约 97 次）
+    // 现在：1 + 5 次 D1 往返，与页数无关
+    const memosWithDetails = await attachDetailsToMemoRows(c.env.DB, memos.results || []);
 
     return c.json(memosWithDetails);
 
@@ -679,116 +672,152 @@ async function getMemoWithDetails(db: any, memoId: number) {
 
   if (!memo) return null;
 
-  // 获取关联的资源详细信息
-  const resources = await db.prepare(`
-    SELECT r.id, r.uid, r.filename, r.type, r.size, r.external_link, r.created_ts
-    FROM resource r
-    JOIN memo_resource mr ON r.id = mr.resource_id 
-    WHERE mr.memo_id = ?
-  `).bind(memoId).all();
+  const [row] = await attachDetailsToMemoRows(db, [memo]);
+  return row ?? null;
+}
 
-  const resourceIdList = (resources.results || []).map((r: any) => r.id);
-  
-  // 转换为前端期望的资源格式
-  const resourceList = (resources.results || []).map((r: any) => ({
-    name: `resources/${r.uid}`,
-    uid: r.uid,
-    createTime: new Date(r.created_ts * 1000).toISOString(),
-    filename: r.filename,
-    content: new Uint8Array(), // 空数组
-    externalLink: '', // 空字符串，让前端构建正确的URL
-    type: r.type,
-    size: r.size,
-    memo: `memos/${memo.id}`, // 关联的memo
-  }));
+/**
+ * 批量为一批 memo 行补齐资源 / 标签 / 关系 / reaction。
+ *
+ * 关键优化：所有关联数据通过 5 条 `IN (...)` 查询一次性取回（用 D1 batch 并发发出），
+ * 而不是对每条 memo 各发 6 条查询。这样列表接口的 D1 往返次数从 1+N*6 降到固定 ~6 次。
+ * D1 每次往返即使是跨机房调用也有几十毫秒延迟，这是列表加载慢的主要来源。
+ */
+async function attachDetailsToMemoRows(db: any, memoRows: any[]) {
+  if (memoRows.length === 0) return [];
 
-  // 获取标签
-  const tags = await db.prepare(`
-    SELECT t.name FROM tag t 
-    JOIN memo_tag mt ON t.id = mt.tag_id 
-    WHERE mt.memo_id = ?
-  `).bind(memoId).all();
+  const ids = memoRows.map((m: any) => m.id as number);
+  const inClause = ids.map(() => '?').join(',');
 
-  const tagList = (tags.results || []).map((t: any) => t.name);
+  const [resourceRes, tagRes, outgoingRes, incomingRes, reactionRes] = await db.batch([
+    db.prepare(`
+      SELECT mr.memo_id, r.id, r.uid, r.filename, r.type, r.size, r.external_link, r.created_ts
+      FROM memo_resource mr
+      JOIN resource r ON r.id = mr.resource_id
+      WHERE mr.memo_id IN (${inClause})
+    `).bind(...ids),
 
-  // 获取关系信息 - 包括这个memo作为评论者的关系和作为被评论者的关系
-  const outgoingRelations = await db.prepare(`
-    SELECT mr.type, mr.related_memo_id, m.uid as related_memo_uid, m.content as related_memo_content
-    FROM memo_relation mr
-    JOIN memo m ON mr.related_memo_id = m.id
-    WHERE mr.memo_id = ?
-  `).bind(memoId).all();
+    db.prepare(`
+      SELECT mt.memo_id, t.name
+      FROM memo_tag mt
+      JOIN tag t ON t.id = mt.tag_id
+      WHERE mt.memo_id IN (${inClause})
+    `).bind(...ids),
 
-  const incomingRelations = await db.prepare(`
-    SELECT mr.type, mr.memo_id, m.uid as memo_uid, m.content as memo_content
-    FROM memo_relation mr
-    JOIN memo m ON mr.memo_id = m.id
-    WHERE mr.related_memo_id = ?
-  `).bind(memoId).all();
+    db.prepare(`
+      SELECT mr.memo_id, mr.type, mr.related_memo_id, m.uid as related_memo_uid, m.content as related_memo_content
+      FROM memo_relation mr
+      JOIN memo m ON mr.related_memo_id = m.id
+      WHERE mr.memo_id IN (${inClause})
+    `).bind(...ids),
 
-  // 获取reaction信息
-  const reactions = await db.prepare(`
-    SELECT mr.id, mr.reaction_type, mr.creator_id, u.username as creator_username
-    FROM memo_reaction mr
-    JOIN user u ON mr.creator_id = u.id
-    WHERE mr.memo_id = ?
-    ORDER BY mr.created_ts ASC
-  `).bind(memoId).all();
+    db.prepare(`
+      SELECT mr.related_memo_id as anchor_memo_id, mr.type, mr.memo_id, m.uid as memo_uid, m.content as memo_content
+      FROM memo_relation mr
+      JOIN memo m ON mr.memo_id = m.id
+      WHERE mr.related_memo_id IN (${inClause})
+    `).bind(...ids),
 
-  const relationList = [
-    ...(outgoingRelations.results || []).map((r: any) => ({
+    db.prepare(`
+      SELECT mr.memo_id, mr.id, mr.reaction_type, mr.creator_id, mr.created_ts, u.username as creator_username
+      FROM memo_reaction mr
+      JOIN user u ON mr.creator_id = u.id
+      WHERE mr.memo_id IN (${inClause})
+      ORDER BY mr.created_ts ASC
+    `).bind(...ids),
+  ]);
+
+  // 按 memo 归集结果，避免 O(N*M) 的查找
+  const groupBy = <T,>(rows: T[] | undefined, keyOf: (row: T) => number) => {
+    const map = new Map<number, T[]>();
+    for (const row of rows || []) {
+      const key = keyOf(row);
+      const bucket = map.get(key);
+      if (bucket) bucket.push(row);
+      else map.set(key, [row]);
+    }
+    return map;
+  };
+
+  const resourcesByMemo = groupBy(resourceRes.results as any[], (r) => r.memo_id);
+  const tagsByMemo = groupBy(tagRes.results as any[], (r) => r.memo_id);
+  const outgoingByMemo = groupBy(outgoingRes.results as any[], (r) => r.memo_id);
+  const incomingByMemo = groupBy(incomingRes.results as any[], (r) => r.anchor_memo_id);
+  const reactionsByMemo = groupBy(reactionRes.results as any[], (r) => r.memo_id);
+
+  return memoRows.map((memo: any) => {
+    const memoId = memo.id as number;
+
+    const resources = resourcesByMemo.get(memoId) || [];
+    const outgoing = outgoingByMemo.get(memoId) || [];
+    const incoming = incomingByMemo.get(memoId) || [];
+    const reactions = reactionsByMemo.get(memoId) || [];
+
+    const resourceList = resources.map((r: any) => ({
+      name: `resources/${r.uid}`,
+      uid: r.uid,
+      createTime: new Date(r.created_ts * 1000).toISOString(),
+      filename: r.filename,
+      content: new Uint8Array(), // 空数组
+      externalLink: '', // 空字符串，让前端构建正确的URL
+      type: r.type,
+      size: r.size,
+      memo: `memos/${memo.id}`, // 关联的memo
+    }));
+
+    const outgoingRelations = outgoing.map((r: any) => ({
       memo: { name: `memos/${memoId}`, uid: memo.uid, id: memoId },
-      relatedMemo: { 
-        name: `memos/${r.related_memo_id}`, 
+      relatedMemo: {
+        name: `memos/${r.related_memo_id}`,
         uid: r.related_memo_uid,
         id: r.related_memo_id,
-        snippet: r.related_memo_content ? r.related_memo_content.slice(0, 100) : ''
+        snippet: r.related_memo_content ? r.related_memo_content.slice(0, 100) : '',
       },
-      type: r.type
-    })),
-    ...(incomingRelations.results || []).map((r: any) => ({
-      memo: { 
-        name: `memos/${r.memo_id}`, 
+      type: r.type,
+    }));
+
+    const incomingRelations = incoming.map((r: any) => ({
+      memo: {
+        name: `memos/${r.memo_id}`,
         uid: r.memo_uid,
         id: r.memo_id,
-        snippet: r.memo_content ? r.memo_content.slice(0, 100) : ''
+        snippet: r.memo_content ? r.memo_content.slice(0, 100) : '',
       },
       relatedMemo: { name: `memos/${memoId}`, uid: memo.uid, id: memoId },
-      type: r.type
-    }))
-  ];
+      type: r.type,
+    }));
 
-  // 转换reactions为前端期望的格式
-  const reactionList = (reactions.results || []).map((r: any) => ({
-    id: r.id,
-    reactionType: r.reaction_type,
-    creator: `users/${r.creator_id}`,
-    contentId: `memos/${memoId}`,
-    createdTs: r.created_ts
-  }));
+    const reactionList = reactions.map((r: any) => ({
+      id: r.id,
+      reactionType: r.reaction_type,
+      creator: `users/${r.creator_id}`,
+      contentId: `memos/${memoId}`,
+      createdTs: r.created_ts,
+    }));
 
-  return {
-    id: memo.id,
-    uid: memo.uid,
-    creatorId: memo.creator_id,
-    content: memo.content,
-    visibility: memo.visibility,
-    rowStatus: memo.row_status,
-    pinned: Boolean(memo.pinned), // 添加pinned字段
-    createdTs: memo.created_ts,
-    updatedTs: memo.updated_ts,
-    resourceIdList, // 保留向后兼容
-    resources: resourceList, // 新增：完整的资源对象数组
-    tags: tagList,
-    relations: relationList, // 新增：关系信息
-    reactions: reactionList, // 新增：reaction信息
-    snippet: memo.content ? memo.content.slice(0, 100) : '', // 添加snippet字段
-    location: memo.location_placeholder || memo.location_latitude || memo.location_longitude ? {
-      placeholder: memo.location_placeholder || '',
-      latitude: memo.location_latitude || 0,
-      longitude: memo.location_longitude || 0
-    } : undefined
-  };
+    return {
+      id: memo.id,
+      uid: memo.uid,
+      creatorId: memo.creator_id,
+      content: memo.content,
+      visibility: memo.visibility,
+      rowStatus: memo.row_status,
+      pinned: Boolean(memo.pinned),
+      createdTs: memo.created_ts,
+      updatedTs: memo.updated_ts,
+      resourceIdList: resources.map((r: any) => r.id), // 保留向后兼容
+      resources: resourceList,
+      tags: (tagsByMemo.get(memoId) || []).map((t: any) => t.name),
+      relations: [...outgoingRelations, ...incomingRelations],
+      reactions: reactionList,
+      snippet: memo.content ? memo.content.slice(0, 100) : '',
+      location: memo.location_placeholder || memo.location_latitude || memo.location_longitude ? {
+        placeholder: memo.location_placeholder || '',
+        latitude: memo.location_latitude || 0,
+        longitude: memo.location_longitude || 0,
+      } : undefined,
+    };
+  });
 }
 
 // 创建memo评论

@@ -88,11 +88,16 @@ const workspaceStore = (() => {
 })();
 
 export const initialWorkspaceStore = async () => {
-  const workspaceProfile = await workspaceServiceClient.getWorkspaceProfile({});
-  // Prepare workspace settings.
-  for (const key of [WorkspaceSettingKey.GENERAL, WorkspaceSettingKey.MEMO_RELATED]) {
-    await workspaceStore.fetchWorkspaceSetting(key);
-  }
+  // The profile request and the two setting requests are independent, but they
+  // were awaited one after another, so every app start paid 3 sequential round
+  // trips to the Worker before React could render anything. Fire them together
+  // and we only pay one.
+  const [workspaceProfile] = await Promise.all([
+    workspaceServiceClient.getWorkspaceProfile({}),
+    ...([WorkspaceSettingKey.GENERAL, WorkspaceSettingKey.MEMO_RELATED] as WorkspaceSettingKey[]).map((key) =>
+      workspaceStore.fetchWorkspaceSetting(key),
+    ),
+  ]);
 
   const workspaceGeneralSetting = workspaceStore.state.generalSetting;
   workspaceStore.state.setPartial({

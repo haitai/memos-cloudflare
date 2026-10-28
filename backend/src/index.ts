@@ -54,7 +54,16 @@ app.use('*', cors({
 }));
 
 app.use('*', logger());
-app.use('/api/*', prettyJSON());
+// prettyJSON 会对每个响应重新 JSON.parse 再缩进序列化。
+// 列表接口返回几十条 memo 时这会明显增大响应体并消耗 Worker CPU，
+// 所以只在 debug 日志级别下启用。
+const prettyJSONHandler = prettyJSON();
+app.use('/api/*', async (c, next) => {
+  if (c.env.LOG_LEVEL === 'debug') {
+    return prettyJSONHandler(c, next);
+  }
+  await next();
+});
 
 // 健康检查端点
 app.get('/health', (c) => {

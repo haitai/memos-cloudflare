@@ -114,6 +114,13 @@ CREATE INDEX idx_memo_relation_memo_id ON memo_relation (memo_id);
 CREATE INDEX idx_memo_relation_related_memo_id ON memo_relation (related_memo_id);
 CREATE INDEX idx_memo_relation_type ON memo_relation (type);
 
+-- 性能索引：让列表查询按 created_ts 有序扫描并在 LIMIT 处提前终止，
+-- 避免每页都要扫描 + 排序。详见 migrations/001_perf_indexes.sql
+CREATE INDEX IF NOT EXISTS idx_memo_creator_rowstatus_created ON memo (creator_id, row_status, created_ts DESC);
+CREATE INDEX IF NOT EXISTS idx_memo_rowstatus_visibility_created ON memo (row_status, visibility, created_ts DESC);
+CREATE INDEX IF NOT EXISTS idx_memo_relation_type_memo_id ON memo_relation (type, memo_id);
+CREATE INDEX IF NOT EXISTS idx_memo_creator_rowstatus ON memo (creator_id, row_status);
+
 -- Memo反应表（用于点赞、表情等）
 CREATE TABLE memo_reaction (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

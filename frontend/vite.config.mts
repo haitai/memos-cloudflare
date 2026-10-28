@@ -42,15 +42,22 @@ export default defineConfig({
       "@/": `${resolve(__dirname, "src")}/`,
     },
   },
+  // NOTE: this used to use the object form of manualChunks to pin mermaid /
+  // katex / leaflet into named vendor chunks. That defeated code splitting:
+  // those chunks were emitted as STATIC imports of the entry and got
+  // modulepreloaded on every page view, even for visitors whose memos contain
+  // no math, no diagram and no location (~230kB gzip wasted on first load).
+  // Leaving this unset lets Rollup keep dynamically imported libraries
+  // (mermaid via MermaidBlock, katex via Math) in true on-demand chunks.
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          "mui-vendor": ["@mui/joy", "@emotion/react", "@emotion/styled"],
-          "utils-vendor": ["dayjs", "lodash-es"],
-          "katex-vendor": ["katex"],
-          "mermaid-vendor": ["mermaid"],
-          "leaflet-vendor": ["leaflet", "react-leaflet"],
+        // Still group large, always-used frameworks so they can be cached
+        // separately from app code across deploys.
+        manualChunks(id: string) {
+          if (!id.includes("node_modules")) return;
+          if (/node_modules\/(@mui|@emotion)\//.test(id)) return "mui-vendor";
+          if (/node_modules\/(dayjs|lodash-es)\//.test(id)) return "utils-vendor";
         },
       },
     },

@@ -1,9 +1,11 @@
-import { LatLng } from "leaflet";
 import { MapPinIcon } from "lucide-react";
-import { useState } from "react";
+import { Suspense, lazy, useState } from "react";
 import { Location } from "@/types/proto/api/v1/memo_service";
-import LeafletMap from "./LeafletMap";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/Popover";
+
+// Leaflet (~45kB gzip) is only needed once someone actually opens the location
+// popover, so keep it out of the initial bundle.
+const LeafletMap = lazy(() => import("./LeafletMap"));
 
 interface Props {
   location: Location;
@@ -25,7 +27,9 @@ const MemoLocationView: React.FC<Props> = (props: Props) => {
       </PopoverTrigger>
       <PopoverContent align="start">
         <div className="min-w-80 sm:w-lg flex flex-col justify-start items-start">
-          <LeafletMap latlng={new LatLng(location.latitude, location.longitude)} readonly={true} />
+          <Suspense fallback={<div className="w-full h-72 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-md" />}>
+            <LeafletMap latlng={{ lat: location.latitude, lng: location.longitude }} readonly={true} />
+          </Suspense>
         </div>
       </PopoverContent>
     </Popover>

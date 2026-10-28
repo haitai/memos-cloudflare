@@ -1,12 +1,14 @@
 import { Button, Input } from "@usememos/mui";
-import { LatLng } from "leaflet";
 import { MapPinIcon, XIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import LeafletMap from "@/components/LeafletMap";
+import { LatLngLike } from "@/components/LeafletMap";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/Popover";
 import { Location } from "@/types/proto/api/v1/memo_service";
 import { useTranslate } from "@/utils/i18n";
+
+// Loaded on demand: the map only exists while the picker popover is open.
+const LeafletMap = lazy(() => import("@/components/LeafletMap"));
 
 interface Props {
   location?: Location;
@@ -16,7 +18,7 @@ interface Props {
 interface State {
   initilized: boolean;
   placeholder: string;
-  position?: LatLng;
+  position?: LatLngLike;
 }
 
 const LocationSelector = (props: Props) => {
@@ -24,7 +26,7 @@ const LocationSelector = (props: Props) => {
   const [state, setState] = useState<State>({
     initilized: false,
     placeholder: props.location?.placeholder || "",
-    position: props.location ? new LatLng(props.location.latitude, props.location.longitude) : undefined,
+    position: props.location ? { lat: props.location.latitude, lng: props.location.longitude } : undefined,
   });
   const [popoverOpen, setPopoverOpen] = useState<boolean>(false);
 
@@ -32,7 +34,7 @@ const LocationSelector = (props: Props) => {
     setState((state) => ({
       ...state,
       placeholder: props.location?.placeholder || "",
-      position: new LatLng(props.location?.latitude || 0, props.location?.longitude || 0),
+      position: { lat: props.location?.latitude || 0, lng: props.location?.longitude || 0 },
     }));
   }, [props.location]);
 
@@ -49,7 +51,7 @@ const LocationSelector = (props: Props) => {
           (position) => {
             const lat = position.coords.latitude;
             const lng = position.coords.longitude;
-            setState({ ...state, position: new LatLng(lat, lng), initilized: true });
+            setState({ ...state, position: { lat, lng }, initilized: true });
           },
           (error) => {
             handleError(error, "Failed to get current position");
@@ -81,7 +83,7 @@ const LocationSelector = (props: Props) => {
       });
   }, [state.position]);
 
-  const onPositionChanged = (position: LatLng) => {
+  const onPositionChanged = (position: LatLngLike) => {
     setState({ ...state, position });
   };
 
@@ -106,7 +108,9 @@ const LocationSelector = (props: Props) => {
       </PopoverTrigger>
       <PopoverContent align="center">
         <div className="min-w-80 sm:w-lg flex flex-col justify-start items-start">
-          <LeafletMap key={JSON.stringify(state.initilized)} latlng={state.position} onChange={onPositionChanged} />
+          <Suspense fallback={<div className="w-full h-72 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-md" />}>
+            <LeafletMap key={JSON.stringify(state.initilized)} latlng={state.position} onChange={onPositionChanged} />
+          </Suspense>
           <div className="mt-2 w-full flex flex-row justify-between items-center gap-2">
             <div className="flex flex-row items-center justify-start gap-2">
               <Input

@@ -32,6 +32,7 @@ import {
   TextNode,
   UnorderedListItemNode,
 } from "@/types/proto/api/v1/markdown_service";
+import { Suspense, lazy } from "react";
 import Blockquote from "./Blockquote";
 import Bold from "./Bold";
 import BoldItalic from "./BoldItalic";
@@ -48,7 +49,6 @@ import Italic from "./Italic";
 import LineBreak from "./LineBreak";
 import Link from "./Link";
 import List from "./List";
-import Math from "./Math";
 import OrderedListItem from "./OrderedListItem";
 import Paragraph from "./Paragraph";
 import ReferencedContent from "./ReferencedContent";
@@ -61,6 +61,12 @@ import Tag from "./Tag";
 import TaskListItem from "./TaskListItem";
 import Text from "./Text";
 import UnorderedListItem from "./UnorderedListItem";
+
+// KaTeX costs roughly 77kB gzipped and almost no memo contains math, so it is
+// loaded on demand instead of being part of the initial bundle.
+const MathRenderer = lazy(() => import("./Math"));
+
+const inlineMathFallback = <span>...</span>;
 
 interface Props {
   index: string;
@@ -90,7 +96,11 @@ const Renderer: React.FC<Props> = ({ index, node }: Props) => {
     case NodeType.TASK_LIST_ITEM:
       return <TaskListItem index={index} node={node} {...(node.taskListItemNode as TaskListItemNode)} />;
     case NodeType.MATH_BLOCK:
-      return <Math {...(node.mathBlockNode as MathBlockNode)} block={true} />;
+      return (
+        <Suspense fallback={inlineMathFallback}>
+          <MathRenderer {...(node.mathBlockNode as MathBlockNode)} block={true} />
+        </Suspense>
+      );
     case NodeType.TABLE:
       return <Table index={index} {...(node.tableNode as TableNode)} />;
     case NodeType.EMBEDDED_CONTENT:
@@ -116,7 +126,11 @@ const Renderer: React.FC<Props> = ({ index, node }: Props) => {
     case NodeType.STRIKETHROUGH:
       return <Strikethrough {...(node.strikethroughNode as StrikethroughNode)} />;
     case NodeType.MATH:
-      return <Math {...(node.mathNode as MathNode)} />;
+      return (
+        <Suspense fallback={inlineMathFallback}>
+          <MathRenderer {...(node.mathNode as MathNode)} />
+        </Suspense>
+      );
     case NodeType.HIGHLIGHT:
       return <Highlight {...(node.highlightNode as HighlightNode)} />;
     case NodeType.ESCAPING_CHARACTER:

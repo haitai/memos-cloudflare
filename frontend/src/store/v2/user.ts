@@ -218,10 +218,12 @@ const userStore = (() => {
 export const initialUserStore = async () => {
   try {
     const currentUser = await authServiceClient.getAuthStatus({});
+    const currentUserId = parseInt(currentUser.name.replace('users/', ''));
     let userSetting;
-    
+
     try {
-      userSetting = await userServiceClient.getUserSetting({});
+      // Passing userId reuses the request above instead of re-fetching /me.
+      userSetting = await userServiceClient.getUserSetting({ userId: currentUserId });
     } catch (error) {
       console.warn('Failed to fetch user setting, using defaults:', error);
       // 如果获取用户设置失败，使用默认设置

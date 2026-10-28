@@ -11,7 +11,6 @@ import { initialWorkspaceStore } from "./store/v2/workspace";
 import "./style.css";
 import theme from "./theme";
 import "@usememos/mui/dist/index.css";
-import "leaflet/dist/leaflet.css";
 
 // Version identification for deployment debugging
 const BUILD_VERSION = "v2025-07-11-13:12:00";
@@ -27,8 +26,15 @@ const Main = observer(() => (
 ));
 
 (async () => {
-  await initialWorkspaceStore();
-  await initialUserStore();
+  // A rejected store initializer used to abort before root.render() was ever
+  // called, leaving the user with a permanently blank page and no way back.
+  // The app degrades fine on defaults, so log and render regardless.
+  try {
+    await initialWorkspaceStore();
+    await initialUserStore();
+  } catch (error) {
+    console.error("Failed to initialize stores, continuing with defaults:", error);
+  }
 
   const container = document.getElementById("root");
   const root = createRoot(container as HTMLElement);

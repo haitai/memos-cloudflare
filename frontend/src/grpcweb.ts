@@ -84,10 +84,15 @@ updateUser: (request: { user: any; updateMask: any }) => {
     const id = parseInt(request.name.replace('users/', ''));
     return apiClient.deleteUser(id);
   },
-  getUserSetting: async (request?: { name?: string }) => {
-    // 获取当前用户信息来提取ID
-    const currentUser = await apiClient.getCurrentUser();
-    const currentUserId = parseInt(currentUser.name.replace('users/', ''));
+  getUserSetting: async (request?: { name?: string; userId?: number }) => {
+    // Callers that already resolved the current user can pass userId to skip a
+    // duplicate GET /api/user/me round trip. During bootstrap this used to mean
+    // every user hitting /me twice in a row.
+    let currentUserId = request?.userId;
+    if (currentUserId === undefined) {
+      const currentUser = await apiClient.getCurrentUser();
+      currentUserId = parseInt(currentUser.name.replace('users/', ''));
+    }
     return apiClient.getUserSetting(currentUserId);
   },
   updateUserSetting: async (request: { setting: any; updateMask: string[] }) => {
